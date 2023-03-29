@@ -1,0 +1,7 @@
+판매 페이지에 적혀있었던 것 https://dl.espressif.com/dl/package_esp32_index.json
+
+새로 찾은거 https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json
+
+
+sd 코드 실행하려고 했는데 
+걍둘다 sd코드 안됨 쉣

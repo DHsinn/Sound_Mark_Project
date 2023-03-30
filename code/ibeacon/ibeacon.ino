@@ -28,7 +28,7 @@ void setup()
 {
   Serial.begin(115200);
 
-  BLEDevice::init("IBeacon Test"); // BLE을 생성
+  BLEDevice::init("IBeacon Test얍"); // BLE을 생성
 
   printDeviceAddress(); // 장치의 MAC ADDRESS를 출력
   Serial.println("");
@@ -44,7 +44,7 @@ void setup()
   oBeacon.setManufacturerId(0x4C00); // 애플의 제조사 고유번호 입니다. fake Apple 0x004C LSB (ENDIAN_CHANGE_U16!)
   oBeacon.setProximityUUID(BLEUUID(BEACON_UUID)); // UUID를 위에 정의한걸로 설정
 
-  Serial.println(BLEUUID(BEACON_UUID).toString().c_str()); // UUID를 시링러 모니터에 출력
+  Serial.println(BLEUUID(BEACON_UUID).toString().c_str()); // UUID를 시리얼 모니터에 출력
   
   // MAJOR 및 MINOR 값 설정
   oBeacon.setMajor(20);

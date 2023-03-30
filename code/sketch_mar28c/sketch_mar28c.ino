@@ -3,6 +3,18 @@
    Ported to Arduino ESP32 by pcbreflux
 */
 
+
+#include "pitches.h" //음계
+
+#define speakerpin 23   //스피커 연결 핀번호
+
+int melody[] = {NOTE_G7,NOTE_G7,NOTE_A7,NOTE_A7,NOTE_G7,NOTE_G7,NOTE_E7,NOTE_G7,
+NOTE_G7,NOTE_E7,NOTE_E7,NOTE_D7,NOTE_G7,NOTE_G7,NOTE_A7,NOTE_A7,
+NOTE_G7,NOTE_G7,NOTE_E7,NOTE_G7,NOTE_E7,NOTE_D7,NOTE_E7,NOTE_C7};
+
+int nds[] = {4,4,4,4,4,4,2,4,4,4,4,1,4,4,4,4,4,4,2,4,4,4,4};
+
+
  
 /*
    Create a BLE server that will send periodic iBeacon frames.
@@ -51,6 +63,7 @@ void setBeacon() {
   //아래 값들은 iBeacon 사용시 고정인 듯?
   strServiceData += (char)26;     // Len 데이터 길이가 총 26인데 이중 데이터가 25, 데이터 유형 1바이트
   strServiceData += (char)0xFF;   // Type 데이터 유형 0xFF
+
   strServiceData += oBeacon.getData();  // 비콘 데이터 가져오기
   oAdvertisementData.addData(strServiceData);  // 비콘 데이터를 어드버타이징에 설정
   
@@ -59,24 +72,25 @@ void setBeacon() {
 }
 
 void setup() {
-
     
   Serial.begin(115200);       //시리얼 통신을 위해 속도 맞춰주기 시리얼 모니터 확인용
+
   gettimeofday(&now, NULL);    // 현재 시간 가져오기
 
   Serial.printf("start ESP32 %d\n",bootcount++);  //재부팅 카운트 출력
 
-  Serial.printf("deep sleep (%lds since last reset, %lds since last boot)\n",now.tv_sec,now.tv_sec-last);  // 얼마만에 재부팅 했는지 출력
+  Serial.printf("deep sleep (%lds since last reset, %lds since last boot)\n",now.tv_sec,now.tv_sec - last);  // 얼마만에 재부팅 했는지 출력
 
   last = now.tv_sec;  // 현재 시간을 last에 저장
   
   // Create the BLE Device
-  BLEDevice::init("");    //BLE 초기화
+  BLEDevice::init("IBeacon Test입니다.");    //BLE 초기화,생성 (이름설정가능)
 
   // Create the BLE Server
   // BLEServer *pServer = BLEDevice::createServer(); // <-- no longer required to instantiate BLEServer, less flash and ram usage
 
   pAdvertising = BLEDevice::getAdvertising();    //외부로 비콘 송출에 사용되는 어드버타이징 변수를 가져온다.
+  BLEDevice::startAdvertising();  //이거 써줘야 BLEDevice 값이 들어감
   
   setBeacon();   //비콘 설정 함수 호출
    // Start advertising
@@ -89,9 +103,31 @@ void setup() {
   //esp_deep_sleep(1000000LL * GPIO_DEEP_SLEEP_DURATION);   //절전 모드 진입, 10초후 깨어남 깨어나서 (리셋 이기 때문에) 다시 setup 함수부터 시작
   //Serial.printf("in deep sleep\n");
   
+  for(int tn = 0; tn<24; tn++){
+    int nd=1000/nds[tn];
+    tone(speakerpin, melody[tn],nd);
+    int pbn = nd*1.30;
+    delay(pbn);
+    noTone(speakerpin);
+  }  //학교종이 땡땡땡 출력
 }
 
 void loop() {
+  
+
+  /* 스피커 부저 테스트
+  if(Serial.available()){
+    byte b = Serial.read();
+
+    if(b == '0'){
+      tone(speakerpin,500,500);
+      delay(2000);
+    }
+    if(b == '1'){
+      tone(speakerpin,0,0);
+    }
+  }*/
+
   /*
   -사용자 입장-
   1. 스마트폰 앱으로 사운드 마크들 스캔 정보 확인 (장애물, 화장실, 출입문, 책상 등) 특정 사운드마크에 알림 요청 장애물은 사용자가 다가오면 자동으로 위험 신호 발생
@@ -124,6 +160,7 @@ void loop() {
   3. 작동거리 30m
   4. 설정 사운드 종류 10+개
   5. 배터리 사용기간 1달~1년
+
   */
   
 }

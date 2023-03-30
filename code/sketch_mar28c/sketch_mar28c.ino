@@ -3,17 +3,26 @@
    Ported to Arduino ESP32 by pcbreflux
 */
 
-
+// 스피커
 #include "pitches.h" //음계
 
 #define speakerpin 23   //스피커 연결 핀번호
+
 
 int melody[] = {NOTE_G7,NOTE_G7,NOTE_A7,NOTE_A7,NOTE_G7,NOTE_G7,NOTE_E7,NOTE_G7,
 NOTE_G7,NOTE_E7,NOTE_E7,NOTE_D7,NOTE_G7,NOTE_G7,NOTE_A7,NOTE_A7,
 NOTE_G7,NOTE_G7,NOTE_E7,NOTE_G7,NOTE_E7,NOTE_D7,NOTE_E7,NOTE_C7};
 
 int nds[] = {4,4,4,4,4,4,2,4,4,4,4,1,4,4,4,4,4,4,2,4,4,4,4};
+//
 
+
+//오디오 모듈
+#include <SoftwareSerial.h>
+#include <DFRobotDFPlayerMini.h>
+SoftwareSerial mp3Serial(35, 34); //Esp32의 22,23핀을 mp3용 시리얼 통신으로 지정
+DFRobotDFPlayerMini MP3Player;
+// 일단 안됨 03/30
 
  
 /*
@@ -102,7 +111,7 @@ void setup() {
 
   //esp_deep_sleep(1000000LL * GPIO_DEEP_SLEEP_DURATION);   //절전 모드 진입, 10초후 깨어남 깨어나서 (리셋 이기 때문에) 다시 setup 함수부터 시작
   //Serial.printf("in deep sleep\n");
-  
+  /*
   for(int tn = 0; tn<24; tn++){
     int nd=1000/nds[tn];
     tone(speakerpin, melody[tn],nd);
@@ -110,9 +119,15 @@ void setup() {
     delay(pbn);
     noTone(speakerpin);
   }  //학교종이 땡땡땡 출력
+  */
+  mp3Serial.begin (115200); //mp3용 시리얼 포트 시작
+  MP3Player.begin(mp3Serial);
 }
 
 void loop() {
+  MP3Player.volume(10);
+  MP3Player.play(2); //'0002.mp3'파일 재생
+  delay(10000); //10초 동안 재생
   
 
   /* 스피커 부저 테스트

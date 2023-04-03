@@ -15,8 +15,7 @@ int nds[] = {4,4,4,4,4,4,2,4,4,4,4,1,4,4,4,4,4,4,2,4,4,4,4};
 //오디오 모듈
 #include <SoftwareSerial.h>
 #include <MP3Player_KT403A.h>
-SoftwareSerial mp3(1, 3); //Esp32의 22,23핀을 mp3용 시리얼 통신으로 지정
-// 일단 안됨 03/30
+SoftwareSerial mp3(10, 9); //TX, RX
 
 
 #include "sys/time.h"

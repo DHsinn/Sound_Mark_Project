@@ -64,7 +64,7 @@ void setBeacon() {
 
 void setup() {
     
-  Serial.begin(115200);       //시리얼 통신을 위해 속도 맞춰주기 시리얼 모니터 확인용
+  Serial.begin(9600);       //시리얼 통신을 위해 속도 맞춰주기 시리얼 모니터 확인용
 
   gettimeofday(&now, NULL);    // 현재 시간 가져오기
 
@@ -112,7 +112,7 @@ void setup() {
 
 void loop() {
 
-  /* 스피커 부저 테스트
+/* //스피커 부저 테스트
   if(Serial.available()){
     byte b = Serial.read();
 
@@ -123,8 +123,8 @@ void loop() {
     if(b == '1'){
       tone(speakerpin,0,0);
     }
-  }*/
-
+  }
+*/
 // mp3 파일 재생 명령어
   char recvChar = 0;
     while(Serial.available() > 0)
@@ -167,6 +167,11 @@ void loop() {
         case '8':
             DecreaseVolume();
             Serial.println("Decrease volume");
+            break;
+        case '9':
+            tone(speakerpin,500,500);
+            PlayPause();
+            Serial.println("booooo!! Pause the MP3 player");
             break;
         default:
             break;

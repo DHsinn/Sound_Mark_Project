@@ -136,39 +136,39 @@ void loop() {
     
     switch (recvChar)
     {
-        case '1':
+        case '1':     //노래 재생
             SpecifyMusicPlay(1);
             Serial.println("Specify the music index to play");
             break;
-        case '2':
+        case '2':     //노래 일시정지
             PlayPause();
             Serial.println("Pause the MP3 player");
             break;
-        case '3':
+        case '3':     //노래가 정지된 대부터 다시 재생
             PlayResume();
             Serial.println("Resume the MP3 player");
             break;
-        case '4':
+        case '4':    //다음 노래로
             PlayNext();
             Serial.println("Play the next song");
             break;
-        case '5':
+        case '5':    // 이전 노래로
             PlayPrevious();
             Serial.println("Play the previous song");
             break;
-        case '6':
+        case '6':    //노래들을 전체반복 재생한다
             PlayLoop();
             Serial.println("Play loop for all the songs");
             break;
-        case '7':
+        case '7':  //볼륨을 높인다
             IncreaseVolume();
             Serial.println("Increase volume");
             break;
-        case '8':
+        case '8':    //볼륨을 낮춘다
             DecreaseVolume();
             Serial.println("Decrease volume");
             break;
-        case '9':
+        case '9':   //9가 입력되면 mp3노래가 멈추고 연결된 스피커에서 부저가 울린다.
             tone(speakerpin,500,500);
             PlayPause();
             Serial.println("booooo!! Pause the MP3 player");

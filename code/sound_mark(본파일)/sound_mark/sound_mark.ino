@@ -34,6 +34,7 @@ struct timeval now;  //현재 시간 저장용 변수
 
 //비콘에 사용할 고유 ID
 #define BEACON_UUID           "c2188fd0-cd3a-11ed-afa1-0242ac120002" // UUID 1 128-Bit (may use linux tool uuidgen or random numbers via https://www.uuidgenerator.net/)
+#define SERVICE_UUID          "8fc64f89-8973-45ef-8469-3d52b3cea272" //서비스 UUID     BLE 따라서 추가해본거
 
 //비콘 데이터 설정 함수의 핵심
 void setBeacon() {
@@ -41,8 +42,10 @@ void setBeacon() {
   BLEBeacon oBeacon = BLEBeacon();  //비콘 클래스 생성
   oBeacon.setManufacturerId(0x4C00); // fake Apple 0x004C LSB (ENDIAN_CHANGE_U16!)      // 제조사 ID 설정회사 코드 작성하는것
   oBeacon.setProximityUUID(BLEUUID(BEACON_UUID));        //위 define에 정의한 아이디로 UUID 변경
-  oBeacon.setMajor((bootcount & 0xFFFF0000) >> 16);      //재부팅 될때마다 1씩 증가하는 값을 Major 값에 추가
-  oBeacon.setMinor(bootcount&0xFFFF);                    //재부팅 될때마다 1씩 증가하는 값을 Minor 값에 추가
+  oBeacon.setMajor(10);                                  //Major 값
+  oBeacon.setMinor(5);                                   //minor 값
+  //oBeacon.setMajor((bootcount & 0xFFFF0000) >> 16);      //재부팅 될때마다 1씩 증가하는 값을 Major 값에 추가
+  //oBeacon.setMinor(bootcount&0xFFFF);                    //재부팅 될때마다 1씩 증가하는 값을 Minor 값에 추가
   BLEAdvertisementData oAdvertisementData = BLEAdvertisementData();     //비콘 데이터 외부 송출 위한 어드버타이징 변수 생성
   BLEAdvertisementData oScanResponseData = BLEAdvertisementData();      // 스캔 요청이 오면 반응 할 스캔응답 변수 생성
   
@@ -68,9 +71,10 @@ void setup() {
 
   gettimeofday(&now, NULL);    // 현재 시간 가져오기
 
-  Serial.printf("start ESP32 %d\n",bootcount++);  //재부팅 카운트 출력
+  //Serial.printf("start ESP32 %d\n",bootcount++);  //재부팅 카운트 출력
+  Serial.printf("start ESP32 \n");  //시작 출력
 
-  Serial.printf("deep sleep (%lds since last reset, %lds since last boot)\n",now.tv_sec,now.tv_sec - last);  // 얼마만에 재부팅 했는지 출력
+  //Serial.printf("deep sleep (%lds since last reset, %lds since last boot)\n",now.tv_sec,now.tv_sec - last);  // 얼마만에 재부팅 했는지 출력
 
   last = now.tv_sec;  // 현재 시간을 last에 저장
   
@@ -80,13 +84,14 @@ void setup() {
   // Create the BLE Server
   // BLEServer *pServer = BLEDevice::createServer(); // <-- no longer required to instantiate BLEServer, less flash and ram usage
 
-  pAdvertising = BLEDevice::getAdvertising();    //외부로 비콘 송출에 사용되는 어드버타이징 변수를 가져온다.
+  //pAdvertising = BLEDevice::getAdvertising();    //외부로 비콘 송출에 사용되는 어드버타이징 변수를 가져온다.
+  BLEAdvertising *pAdvertising = BLEDevice::getAdvertising();      //바로 윛주석 BLE 버전으로 추가
   BLEDevice::startAdvertising();  //이거 써줘야 BLEDevice 값이 들어감
   
   setBeacon();   //비콘 설정 함수 호출
    // Start advertising
   pAdvertising->start();   // 외부로 송출 시작
-  Serial.println("Advertizing started...");   // 송출 시작했다고 메시지 출력
+  Serial.println("Advertizing started.!");   // 송출 시작했다고 메시지 출력
   //delay(100);  // 0.1초 대기
   //pAdvertising->stop();  //송출 정지
   //Serial.printf("enter deep sleep\n");  // 절전 모드 진입한다고 메시지 출력
@@ -125,6 +130,7 @@ void loop() {
     }
   }
 */
+
 // mp3 파일 재생 명령어
   char recvChar = 0;
     while(Serial.available() > 0)
@@ -168,10 +174,13 @@ void loop() {
             DecreaseVolume();
             Serial.println("Decrease volume");
             break;
-        case '9':   //9가 입력되면 mp3노래가 멈추고 연결된 스피커에서 부저가 울린다.
+        case '9':   //mp3노래가 멈추고 연결된 스피커에서 부저가 울린다.
             tone(speakerpin,500,500);
             PlayPause();
             Serial.println("booooo!! Pause the MP3 player");
+            break;
+        case 'a':
+            Serial.println("화장실 입니다.");
             break;
         default:
             break;

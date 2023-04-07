@@ -115,6 +115,7 @@ void setup() {
     SetVolume(0x0E);                // Set the volume, the range is 0x00 to 0x1E.
 }
 
+
 void loop() {
 
 /* //스피커 부저 테스트

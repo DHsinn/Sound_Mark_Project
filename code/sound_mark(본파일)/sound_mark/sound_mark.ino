@@ -15,7 +15,7 @@ int nds[] = {4,4,4,4,4,4,2,4,4,4,4,1,4,4,4,4,4,4,2,4,4,4,4};
 //오디오 모듈
 #include <SoftwareSerial.h>
 #include <MP3Player_KT403A.h>
-SoftwareSerial mp3(17, 16); //TX, RX
+SoftwareSerial mp3(17, 16); //TX, RX  (GIOP 번호)
 
 
 #include "sys/time.h"
@@ -79,7 +79,7 @@ void setup() {
   last = now.tv_sec;  // 현재 시간을 last에 저장
   
   // Create the BLE Device
-  BLEDevice::init("IBeacon Test입니다.");    //BLE 초기화,생성 (이름설정가능)
+  BLEDevice::init("RIVO 비콘");    //BLE 초기화,생성 (이름설정가능)
 
   // Create the BLE Server
   // BLEServer *pServer = BLEDevice::createServer(); // <-- no longer required to instantiate BLEServer, less flash and ram usage
@@ -98,6 +98,7 @@ void setup() {
 
   //esp_deep_sleep(1000000LL * GPIO_DEEP_SLEEP_DURATION);   //절전 모드 진입, 10초후 깨어남 깨어나서 (리셋 이기 때문에) 다시 setup 함수부터 시작
   //Serial.printf("in deep sleep\n");
+  
   /*
   for(int tn = 0; tn<24; tn++){
     int nd=1000/nds[tn];
@@ -107,6 +108,7 @@ void setup() {
     noTone(speakerpin);
   }  //학교종이 땡땡땡 출력
   */
+
   mp3.begin(9600);
     Serial.begin(9600); 
     delay(100);

@@ -98,12 +98,12 @@ void setup() {
   // 송출을 시작했다고 디버그 메시지 출력
   Serial.println("Hello, let me introduce myself. I'm an employee of rivo Corporation");
   // 100ms, 0.1초 대기
-  delay(100);
+ // delay(100);
   // 송출하던 것을 멈춘다.
-  pAdvertising->stop();
+  //pAdvertising->stop();
 
   // 절전 모드에 진입한다고 디버그 메시지 출력
-  Serial.printf("enter deep sleep\n");
+  //Serial.printf("enter deep sleep\n");
 
   /* 
    절전 모드 진입, 매게변수(파라미터, 옵션)은 마이크로 세컨드(us, 0.000001초)단위 이다.
@@ -111,7 +111,7 @@ void setup() {
    10초후 깨어난다. 깨어나면 바로 이어서 실행되는 것이 아니고 리셋(리부팅)이 되기 때문에
    setup 함수 부터 다시 시작한다.
   */
-  esp_deep_sleep(1000000LL * GPIO_DEEP_SLEEP_DURATION);
+  //esp_deep_sleep(1000000LL * GPIO_DEEP_SLEEP_DURATION);
 
   // 절전 모드에 진입 후에는 리부팅 되기 때문에 아래의 메시지는 출력되지 않는다.
   Serial.printf("in deep sleep\n");

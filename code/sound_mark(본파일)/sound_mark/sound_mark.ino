@@ -66,7 +66,7 @@ void setBeacon() {
 }
 
 void setup() {
-    
+
   Serial.begin(9600);       //시리얼 통신을 위해 속도 맞춰주기 시리얼 모니터 확인용
 
   gettimeofday(&now, NULL);    // 현재 시간 가져오기
@@ -134,7 +134,7 @@ void loop() {
   }
 */
 
-// mp3 파일 재생 명령어
+/*// mp3 파일 재생 명령어
   char recvChar = 0;
     while(Serial.available() > 0)
     {
@@ -190,7 +190,7 @@ void loop() {
     }
     
     delay(1000);
-
+*/
   /*
   -사용자 입장-
   1. 스마트폰 앱으로 사운드 마크들 스캔 정보 확인 (장애물, 화장실, 출입문, 책상 등) 특정 사운드마크에 알림 요청 장애물은 사용자가 다가오면 자동으로 위험 신호 발생

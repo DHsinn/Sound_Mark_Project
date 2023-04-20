@@ -9,7 +9,6 @@ NOTE_G7,NOTE_E7,NOTE_E7,NOTE_D7,NOTE_G7,NOTE_G7,NOTE_A7,NOTE_A7,
 NOTE_G7,NOTE_G7,NOTE_E7,NOTE_G7,NOTE_E7,NOTE_D7,NOTE_E7,NOTE_C7};
 
 int nds[] = {4,4,4,4,4,4,2,4,4,4,4,1,4,4,4,4,4,4,2,4,4,4,4};
-//
 
 
 //오디오 모듈
@@ -89,7 +88,7 @@ void setup() {
   BLEDevice::startAdvertising();  //이거 써줘야 BLEDevice 값이 들어감
   
   setBeacon();   //비콘 설정 함수 호출
-   // Start advertising
+  //Start advertising
   pAdvertising->start();   // 외부로 송출 시작
   Serial.println("Advertizing started.!");   // 송출 시작했다고 메시지 출력
   //delay(100);  // 0.1초 대기

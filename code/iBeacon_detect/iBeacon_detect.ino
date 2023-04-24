@@ -3,6 +3,7 @@
 #include "BLEScan.h"
 #include "BLEAdvertisedDevice.h"
 #include "BLEBeacon.h"
+#include "esp_sleep.h"
 
 // iBeacon UUID
 #define BEACON_UUID "b67b46cc-7009-4d7f-84fa-5ea76b78051d"
@@ -56,6 +57,13 @@ class MyAdvertisedDeviceCallbacks: public BLEAdvertisedDeviceCallbacks {
 };
 
 // 절전 모드로 진입
+// void sleepMode() {
+//     Serial.println("Entering sleep mode...");
+//     BLEDevice::deinit();
+//     esp_sleep_enable_timer_wakeup(SLEEP_DURATION * 1000000);
+//     esp_light_sleep_start();
+// }
+
 void sleepMode() {
     Serial.println("Entering sleep mode...");
     BLEDevice::deinit();
@@ -63,10 +71,10 @@ void sleepMode() {
 }
 
 void setup() {
-  // Serial.begin(115200);
+  Serial.begin(115200);
 
   //--------------------비콘구성---------------------
-  BLEDevice::init("RIVO_iBeacon");
+  //BLEDevice::init("RIVO_iBeacon");
   BLEServer *pServer = BLEDevice::createServer();
 
   BLEBeacon oBeacon = BLEBeacon();
@@ -84,15 +92,14 @@ void setup() {
   BLEAdvertisementData oAdvertisementData = BLEAdvertisementData();
   oAdvertisementData.setFlags(0x04); // BR_EDR_NOT_SUPPORTED
   oAdvertisementData.addData(strServiceData);
-  
+
   pAdvertising = BLEDevice::getAdvertising();
   pAdvertising->setAdvertisementData(oAdvertisementData);
   pAdvertising->setScanResponseData(oAdvertisementData);
   pAdvertising->start();
   //------------------------------------------------
   //---------------------mp3 구성-------------------
-    mp3.begin(9600);
-    Serial.begin(9600); 
+    mp3.begin(9600); 
     delay(100);
     
     SelectPlayerDevice(0x02);       // Select SD card as the player device. 내 디바이스에 있는 SD카드에서 파일 가져오기
@@ -100,7 +107,7 @@ void setup() {
   //------------------------------------------------
 
   //------------------비콘검색-----------------------
-  //BLEDevice::init(""); // BLE을 생성
+  BLEDevice::init("RIVO_iBeacon"); // BLE을 생성
   pBLEScan = BLEDevice::getScan(); // 새로운 스캔 객체 생성
   pBLEScan->setAdvertisedDeviceCallbacks(new MyAdvertisedDeviceCallbacks());
   pBLEScan->setInterval(SCAN_INTERVAL);

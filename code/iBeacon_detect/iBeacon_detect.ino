@@ -10,7 +10,7 @@
 #define TEST_BEACON_UUID "4e05b46d-916b-44ff-9896-38f18f4a12b5"
 
 // 스캔 주기 및 스캔 시간
-#define SCAN_PERIOD 5
+#define SCAN_PERIOD 10
 #define SCAN_INTERVAL 100
 
 //스피커 연결 핀번호 (GIOP 번호)
@@ -27,7 +27,7 @@ SoftwareSerial mp3(17, 16); //TX, RX  (GIOP 번호)
 
 BLEAdvertising *pAdvertising;   //송출 포인터설정
 BLEScan* pBLEScan;   //스캔포인터설정
-bool isBeaconDetected = false;
+bool isBeaconDetected = false;   //아이비콘을 찾았다면 true 값으로 변경
 
 //비콘 manufacturerr data 로 감지하는 클래스
 class MyAdvertisedDeviceCallbacks: public BLEAdvertisedDeviceCallbacks {
@@ -56,6 +56,14 @@ class MyAdvertisedDeviceCallbacks: public BLEAdvertisedDeviceCallbacks {
     }
 };
 
+
+
+// 감지된 iBeacon 수신 감도 (RSSI) 한계 값
+// #define RSSI_THRESHOLD -70
+// iBeacon 수신 감도 (RSSI)가 한계 값 이상이면 작업 수행하는 조건
+// if (advertisedDevice.getRSSI() >= RSSI_THRESHOLD) {
+
+
 // 절전 모드로 진입
 // void sleepMode() {
 //     Serial.println("Entering sleep mode...");
@@ -71,10 +79,11 @@ void sleepMode() {
 }
 
 void setup() {
-  Serial.begin(115200);
+  Serial.begin(9600);
 
   //--------------------비콘구성---------------------
-  //BLEDevice::init("RIVO_iBeacon");
+  BLEDevice::init("RIVO_iBeacon");
+  BLEDevice::startAdvertising();
   BLEServer *pServer = BLEDevice::createServer();
 
   BLEBeacon oBeacon = BLEBeacon();
@@ -98,8 +107,9 @@ void setup() {
   pAdvertising->setScanResponseData(oAdvertisementData);
   pAdvertising->start();
   //------------------------------------------------
+  
   //---------------------mp3 구성-------------------
-    mp3.begin(9600); 
+    mp3.begin(9600);
     delay(100);
     
     SelectPlayerDevice(0x02);       // Select SD card as the player device. 내 디바이스에 있는 SD카드에서 파일 가져오기
@@ -124,8 +134,8 @@ void loop() {
     Serial.println("iBeacon detected, performing task...");
     while(1){
       rec = Serial.read();
-      if(rec='1'||rec=='2'||rec=='3'||rec=='4'||rec=='5'||rec=='6'||rec=='7'||rec=='8'||rec=='9'){
-        Serial.println( rec );
+      if(rec=='1'||rec=='2'||rec=='3'||rec=='4'||rec=='5'||rec=='6'||rec=='7'||rec=='8'||rec=='9'){
+        Serial.println(rec);
       }
       switch (rec){
         case '1':     //노래 재생
@@ -168,10 +178,11 @@ void loop() {
         default:
             break;
       }
+      delay(1000);
       if (millis() >= NO_COMMAND_DURATION * 1000) { // 1분간 명령이 없으면 절전 모드로 진입
         sleepMode();
       }
-      delay(1000);
+      // delay(1000);
     }
     isBeaconDetected = false;
   } else {
@@ -179,7 +190,7 @@ void loop() {
     sleepMode();
   }
   pBLEScan->clearResults(); // 결과 버퍼를 지워서 메모리를 해제합니다.
-  //delay(10000);
+  delay(10000);
 }
 
 // 딥슬립에서 깨어났을 때 실행되는 함수
@@ -193,9 +204,32 @@ extern "C" void app_mam() {
 
 
 
+/*
+#include <vector>
+#include <string>
+
+std::vector<std::string> deviceAddresses;
+
+// 디바이스 주소를 리스트에 추가하는 함수
+void addDeviceAddress(std::string address) {
+    deviceAddresses.push_back(address);
+}
+
+// 리스트에서 특정 디바이스 주소를 찾는 함수
+bool findDeviceAddress(std::string address) {
+    for (const auto& addr : deviceAddresses) {
+        if (addr == address) {
+            return true;
+        }
+    }
+    return false;
+}
+*/
+
+
 
 /*
-//비콘 service UUID로 감지하는 클래스
+//비콘 service UUID로 감지하는 클래스  manufacturerrdata uuid 는 확인 못 함
 class MyAdvertisedDeviceCallbacks: public BLEAdvertisedDeviceCallbacks {
     void onResult(BLEAdvertisedDevice advertisedDevice) {
       Serial.printf("Advertised Device: %s \n", advertisedDevice.toString().c_str());

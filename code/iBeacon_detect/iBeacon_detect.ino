@@ -10,7 +10,7 @@
 #define TEST_BEACON_UUID "4e05b46d-916b-44ff-9896-38f18f4a12b5"
 
 // 스캔 주기 및 스캔 시간
-#define SCAN_PERIOD 10
+#define SCAN_PERIOD 10  //스캔시간 10초
 #define SCAN_INTERVAL 100
 
 //스피커 연결 핀번호 (GIOP 번호)
@@ -79,7 +79,7 @@ void sleepMode() {
 }
 
 void setup() {
-  Serial.begin(9600);
+  Serial.begin(115200);
 
   //--------------------비콘구성---------------------
   BLEDevice::init("RIVO_iBeacon");
@@ -124,16 +124,76 @@ void setup() {
   pBLEScan->setWindow(SCAN_INTERVAL - 1);
   pBLEScan->setActiveScan(true); // 활성화된 스캔은 더 많은 전력을 사용하지만 더 빠르게 결과를 얻을 수 있습니다.
   //-------------------------------------------------
+
+  //------------------비콘검색2-----------------------   액션신호 받을 비콘 검색
+  BLEDevice::init("RIVO_iBeacon"); // BLE을 생성
+  pBLEScan2 = BLEDevice::getScan(); // 새로운 스캔 객체 생성
+  pBLEScan2->setAdvertisedDeviceCallbacks(new MyAdvertisedDeviceCallbacks2());
+  pBLEScan2->setInterval(SCAN_INTERVAL);
+  pBLEScan2->setWindow(SCAN_INTERVAL - 1);
+  pBLEScan2->setActiveScan(true); // 활성화된 스캔은 더 많은 전력을 사용하지만 더 빠르게 결과를 얻을 수 있습니다.
+  //-------------------------------------------------
 }
 
 void loop() {
-  BLEScanResults scanResults = pBLEScan->start(SCAN_PERIOD, false);
+  BLEScanResults scanResults = pBLEScan->start(SCAN_PERIOD, true);    //true는 기기가 활성화 되어 있어야 스캔 false는 활성화 되어있지 않아도 스캔
   char rec = 0;
   if (isBeaconDetected) {
     // iBeacon을 감지한 경우, 원하는 명령 수행
-    Serial.println("iBeacon detected, performing task...");
+    Serial.println("지정한 iBeacon을 찾았습니다! 신호를 기다립니다... (1분간 신호가 없으면 절전모드 후 초기화 됩니다.)");
     while(1){
-      rec = Serial.read();
+      BLEScanResults scanResults = pBLEScan2->start(SCAN_PERIOD, true);    //두번째로 액션 신호 기다리기
+      delay(1000);
+      if (millis() >= NO_COMMAND_DURATION * 1000) { // 1분간 명령이 없으면 절전 모드로 진입
+        sleepMode();
+      }
+      // delay(1000);
+    }
+    isBeaconDetected = false;
+  } else {
+    Serial.println("iBeacon not detected");
+    sleepMode();
+  }
+  pBLEScan->clearResults(); // 결과 버퍼를 지워서 메모리를 해제합니다.
+  delay(10000);
+}
+
+// 딥슬립에서 깨어났을 때 실행되는 함수
+extern "C" void app_mam() {
+    setup();
+    loop();
+}
+
+
+
+
+/*
+#include <vector>
+#include <string>
+
+std::vector<std::string> deviceAddresses;
+
+// 디바이스 주소를 리스트에 추가하는 함수
+void addDeviceAddress(std::string address) {
+    deviceAddresses.push_back(address);
+}
+
+// 리스트에서 특정 디바이스 주소를 찾는 함수
+bool findDeviceAddress(std::string address) {
+    for (const auto& addr : deviceAddresses) {
+        if (addr == address) {
+            return true;
+        }
+    }
+    return false;
+}
+
+
+
+
+//음악 재생
+
+rec = Serial.read();
       if(rec=='1'||rec=='2'||rec=='3'||rec=='4'||rec=='5'||rec=='6'||rec=='7'||rec=='8'||rec=='9'){
         Serial.println(rec);
       }
@@ -178,52 +238,8 @@ void loop() {
         default:
             break;
       }
-      delay(1000);
-      if (millis() >= NO_COMMAND_DURATION * 1000) { // 1분간 명령이 없으면 절전 모드로 진입
-        sleepMode();
-      }
-      // delay(1000);
-    }
-    isBeaconDetected = false;
-  } else {
-    Serial.println("iBeacon not detected");
-    sleepMode();
-  }
-  pBLEScan->clearResults(); // 결과 버퍼를 지워서 메모리를 해제합니다.
-  delay(10000);
-}
-
-// 딥슬립에서 깨어났을 때 실행되는 함수
-extern "C" void app_mam() {
-    setup();
-    loop();
-}
 
 
-
-
-
-
-/*
-#include <vector>
-#include <string>
-
-std::vector<std::string> deviceAddresses;
-
-// 디바이스 주소를 리스트에 추가하는 함수
-void addDeviceAddress(std::string address) {
-    deviceAddresses.push_back(address);
-}
-
-// 리스트에서 특정 디바이스 주소를 찾는 함수
-bool findDeviceAddress(std::string address) {
-    for (const auto& addr : deviceAddresses) {
-        if (addr == address) {
-            return true;
-        }
-    }
-    return false;
-}
 */
 
 

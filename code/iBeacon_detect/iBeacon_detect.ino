@@ -50,7 +50,7 @@ class MyAdvertisedDeviceCallbacks: public BLEAdvertisedDeviceCallbacks {
         if (major == 0 && minor == 10) {
           Serial.println("Processing command for detected iBeacon...");
           // 원하는 명령 처리
-          isBeaconDetected = true;
+          isBeaconDetected = true;   //비콘 찾아서 true로 변경
         }
       }
     }
@@ -124,27 +124,18 @@ void setup() {
   pBLEScan->setWindow(SCAN_INTERVAL - 1);
   pBLEScan->setActiveScan(true); // 활성화된 스캔은 더 많은 전력을 사용하지만 더 빠르게 결과를 얻을 수 있습니다.
   //-------------------------------------------------
-
-  //------------------비콘검색2-----------------------   액션신호 받을 비콘 검색
-  BLEDevice::init("RIVO_iBeacon"); // BLE을 생성
-  pBLEScan2 = BLEDevice::getScan(); // 새로운 스캔 객체 생성
-  pBLEScan2->setAdvertisedDeviceCallbacks(new MyAdvertisedDeviceCallbacks2());
-  pBLEScan2->setInterval(SCAN_INTERVAL);
-  pBLEScan2->setWindow(SCAN_INTERVAL - 1);
-  pBLEScan2->setActiveScan(true); // 활성화된 스캔은 더 많은 전력을 사용하지만 더 빠르게 결과를 얻을 수 있습니다.
-  //-------------------------------------------------
 }
 
 void loop() {
+  long time=millis();
   BLEScanResults scanResults = pBLEScan->start(SCAN_PERIOD, true);    //true는 기기가 활성화 되어 있어야 스캔 false는 활성화 되어있지 않아도 스캔
   char rec = 0;
   if (isBeaconDetected) {
     // iBeacon을 감지한 경우, 원하는 명령 수행
-    Serial.println("지정한 iBeacon을 찾았습니다! 신호를 기다립니다... (1분간 신호가 없으면 절전모드 후 초기화 됩니다.)");
+    Serial.println("지정한 iBeacon을 찾았습니다! 신호를 기다립니다... (1분간 신호가 없으면 절전모드 됩니다.)");
     while(1){
-      BLEScanResults scanResults = pBLEScan2->start(SCAN_PERIOD, true);    //두번째로 액션 신호 기다리기
       delay(1000);
-      if (millis() >= NO_COMMAND_DURATION * 1000) { // 1분간 명령이 없으면 절전 모드로 진입
+      if (time >= NO_COMMAND_DURATION * 1000) { // 1분간 명령이 없으면 절전 모드로 진입
         sleepMode();
       }
       // delay(1000);

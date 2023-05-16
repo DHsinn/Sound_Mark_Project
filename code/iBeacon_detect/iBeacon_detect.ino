@@ -46,6 +46,7 @@ bool Playsong = false;
 //비콘 manufacturerr data 로 감지하는 클래스
 class MyAdvertisedDeviceCallbacks: public BLEAdvertisedDeviceCallbacks {
     void onResult(BLEAdvertisedDevice advertisedDevice) {
+      
       Serial.printf("Advertised Device: %s \n", advertisedDevice.toString().c_str());
 
       // iBeacon 감지 (manufacturerdata가 있는지 확인하고 iBeacon 패킷 구성에 맞는 manufacturerData인지 확인하기)
@@ -62,6 +63,20 @@ class MyAdvertisedDeviceCallbacks: public BLEAdvertisedDeviceCallbacks {
           advertisedDevice.getManufacturerData()[18] == 0x99 &&  advertisedDevice.getManufacturerData()[19] == 0xd2) {
         
         Serial.println("지정된 iBeacon 탐색됨.");
+
+        //비콘 찾은 후 신호 방출
+        BLEBeacon oBeacon = BLEBeacon();
+        oBeacon.setManufacturerId(0x4c00);   //company ID
+        oBeacon.setProximityUUID(BLEUUID(BEACON_UUID));    //UUID
+        oBeacon.setMajor((1<<8)+1);  // 0000 0001 0000 0001
+        oBeacon.setMinor(1);
+        BLEAdvertisementData oAdvertisementData = BLEAdvertisementData();
+        oAdvertisementData.setFlags(0x04);
+        oAdvertisementData.setManufacturerData(oBeacon.getData());
+        pAdvertising = BLEDevice::getAdvertising();
+        pAdvertising->setAdvertisementData(oAdvertisementData);
+        pAdvertising->setScanResponseData(oAdvertisementData);
+        pAdvertising->start();
 
         isBeaconDetected = true;   //비콘 찾았기 때문에 true로 변경
 
@@ -86,18 +101,7 @@ class MyAdvertisedDeviceCallbacks: public BLEAdvertisedDeviceCallbacks {
 void sleepMode() {
     Serial.println("절전 모드로 진입합니다..");
     PlayPause();
-    BLEBeacon oBeacon = BLEBeacon();
-    oBeacon.setManufacturerId(0x4c00);   //company ID
-    oBeacon.setProximityUUID(BLEUUID(BEACON_UUID));    //UUID
-    oBeacon.setMajor(373);
-    oBeacon.setMinor(7);
-    BLEAdvertisementData oAdvertisementData = BLEAdvertisementData();
-    oAdvertisementData.setFlags(0x04);
-    oAdvertisementData.setManufacturerData(oBeacon.getData());
-    pAdvertising = BLEDevice::getAdvertising();
-    pAdvertising->setAdvertisementData(oAdvertisementData);
-    pAdvertising->setScanResponseData(oAdvertisementData);
-    pAdvertising->start();
+    pBLEScan->clearResults();
     BLEDevice::deinit();
     esp_deep_sleep(SLEEP_DURATION * 1000000);
 }
@@ -112,8 +116,8 @@ void setup() {
   BLEBeacon oBeacon = BLEBeacon();
   oBeacon.setManufacturerId(0x4c00);   //company ID
   oBeacon.setProximityUUID(BLEUUID(BEACON_UUID));    //UUID
-  oBeacon.setMajor(77);    //Major
-  oBeacon.setMinor(33);     //Minor
+  oBeacon.setMajor((1<<8)+1);  // 0000 0001 0000 0001
+  oBeacon.setMinor(1);
   
   // 외부로 송출할 데이터 변수 생성하고 변수에 비콘 데이터 담아서 송출
   std::string strServiceData = "";
@@ -182,29 +186,10 @@ void loop() {
           int currentMajor = oBeacon.getMajor();
           int currentMinor = oBeacon.getMinor();*/
 
-          // Major, Minor 값을 업데이트
-          previousMajor = currentMajor;
-          previousMinor = currentMinor;
-
           //Serial.println(currentMajor);
           //Serial.println(currentMinor);
-
+          /*
           if(count==0){
-
-            //비콘 찾아서 신호 보내주려고 major, minor 값 1,0 으로 바꿔서 전송
-            BLEBeacon oBeacon = BLEBeacon();
-            oBeacon.setManufacturerId(0x4c00);   //company ID
-            oBeacon.setProximityUUID(BLEUUID(BEACON_UUID));    //UUID
-            oBeacon.setMajor((1<<8)+2);
-            oBeacon.setMinor(0);
-            BLEAdvertisementData oAdvertisementData = BLEAdvertisementData();
-            oAdvertisementData.setFlags(0x04);
-            oAdvertisementData.setManufacturerData(oBeacon.getData());
-            pAdvertising = BLEDevice::getAdvertising();
-            pAdvertising->setAdvertisementData(oAdvertisementData);
-            pAdvertising->setScanResponseData(oAdvertisementData);
-            pAdvertising->start();
-
             if (currentMajor == (1<<8) && currentMinor == 0) {
               Serial.println("주변 스캔신호~!!");
               Scan = true;
@@ -213,31 +198,34 @@ void loop() {
               Serial.println("노래 재생신호~!!");
               Playsong = true;
             }
-          }
-          else if(count>=1){
-            if (currentMajor != previousMajor || currentMinor != previousMinor) {
-              // 원하는 비콘의 Major, Minor 값이 변경되면 실행할 코드 작성
-              Serial.println("비콘의 Major 또는 Minor 값이 변경되었습니다.");
+          }*/
+          //else if(count>=1){
+          if (currentMajor != previousMajor || currentMinor != previousMinor) {
+            // 원하는 비콘의 Major, Minor 값이 변경되면 실행할 코드 작성
+            // Major, Minor 값을 업데이트
+            previousMajor = currentMajor;
+            previousMinor = currentMinor;
 
-              if (currentMajor == (1<<8) && currentMinor == 0) {
-                Serial.println("주변 스캔신호~!!");
-                Scan = true;
-              }
-              else if(currentMajor == (3<<8) && currentMinor == 0){
-                Serial.println("노래 재생신호~!!");
-                Playsong = true;
-              }
+            Serial.println("비콘의 Major 또는 Minor 값이 변경되었습니다.");
+
+            if (currentMajor == (1<<8) && currentMinor == 1) {
+              Serial.println("주변 스캔신호~!!");
+              Scan = true;
             }
-            else{
-              unsigned long currentMillis = millis();
-              // 1분 이상 경과한 경우
-              if (currentMillis - lastSignalTime >= NO_SIGNAL_DURATION) {
-                // 절전 모드로 진입
-                sleepMode();
-              }
+            else if(currentMajor == (3<<8) && currentMinor == 1){
+              Serial.println("노래 재생신호~!!");
+              Playsong = true;
             }
           }
-          isBeaconDetected = true;
+          else{
+            unsigned long currentMillis = millis();
+            // 1분 이상 경과한 경우
+            if (currentMillis - lastSignalTime >= NO_SIGNAL_DURATION) {
+              // 절전 모드로 진입
+              sleepMode();
+            }
+          }
+        isBeaconDetected = true;
     }
     // 스캔 명령을 받은 경우, 주변 스캔 수행
     if (Scan) {
@@ -253,8 +241,8 @@ void loop() {
       BLEBeacon oBeacon = BLEBeacon();
       oBeacon.setManufacturerId(0x4c00);   //company ID
       oBeacon.setProximityUUID(BLEUUID(BEACON_UUID));    //UUID
-      oBeacon.setMajor((4<<8)+2);
-      oBeacon.setMinor(0);
+      oBeacon.setMajor((4<<8)+1);
+      oBeacon.setMinor(1);
       BLEAdvertisementData oAdvertisementData = BLEAdvertisementData();
       oAdvertisementData.setFlags(0x04);
       oAdvertisementData.setManufacturerData(oBeacon.getData());
@@ -290,7 +278,7 @@ extern "C" void app_mam() {
 }
 
 
-  /*
+  
   unsigned long currentTime = millis();
   unsigned long timeDiff = currentTime - lastSignalTime;
   lastSignalTime = currentTime;

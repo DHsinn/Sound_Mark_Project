@@ -47,6 +47,19 @@ bool Scan = false;
 bool Playsong = false;
 
 
+void sleepMode() {
+    Serial.println("절전 모드로 진입합니다..");
+    //PlayPause();
+    pBLEScan->clearResults();
+    setup();
+    loop();
+    //BLEDevice::deinit();
+    //esp_deep_sleep(SLEEP_DURATION * 1000000);
+}
+
+
+
+
 //비콘 manufacturerr data 로 감지하는 클래스
 class MyAdvertisedDeviceCallbacks: public BLEAdvertisedDeviceCallbacks {
     void onResult(BLEAdvertisedDevice advertisedDevice) {
@@ -71,8 +84,8 @@ class MyAdvertisedDeviceCallbacks: public BLEAdvertisedDeviceCallbacks {
         BLEBeacon oBeacon = BLEBeacon();
         oBeacon.setManufacturerId(0x4c00);   //company ID
         oBeacon.setProximityUUID(BLEUUID(BEACON_UUID));    //UUID
-        oBeacon.setMajor((1<<8)+1);  // 0000 0001 0000 0001
-        oBeacon.setMinor(0);
+        oBeacon.setMajor((1<<8)+3);  // 0000 0001 0000 0001
+        oBeacon.setMinor(3);
         BLEAdvertisementData oAdvertisementData = BLEAdvertisementData();
         oAdvertisementData.setFlags(0x04);
         oAdvertisementData.setManufacturerData(oBeacon.getData());
@@ -85,20 +98,62 @@ class MyAdvertisedDeviceCallbacks: public BLEAdvertisedDeviceCallbacks {
 
         // major, minor 값 뽑아오기
         std::string payload = advertisedDevice.getManufacturerData();
-        uint16_t major = payload[20] << 8 | payload[21];
-        uint16_t minor = payload[22] << 8 | payload[23];
-        Serial.printf("Major: %d, Minor: %d\n", major, minor);
+        uint16_t currentMajor = payload[20] << 8 | payload[21];
+        uint16_t currentMinor = payload[22] << 8 | payload[23];
+        Serial.printf("Major: %d, Minor: %d\n", currentMajor, currentMinor);
+
+        if (currentMajor != previousMajor || currentMinor != previousMinor) {
+            // 원하는 비콘의 Major, Minor 값이 변경되면 실행할 코드 작성
+            // Major, Minor 값을 업데이트
+            previousMajor = currentMajor;
+            previousMinor = currentMinor;
+
+            Serial.println("비콘의 Major 또는 Minor 값이 변경되었습니다.");
+
+            if (currentMajor == (1<<8) && currentMinor == 3) {
+              Serial.println("주변 스캔신호~!!");
+              Serial.println("주변을 스캔합니다.");
+              pBLEScan->start(SCAN_PERIOD, true);
+              Scan = false;
+            }
+
+            else if(currentMajor == (3<<8) && currentMinor == 3){
+              Serial.println("노래 재생신호~!!");
+              Serial.println("노래를 재생합니다.");
+              //비콘 찾아서 신호 보내주려고 major, minor 값 바꿔서 전송
+              BLEBeacon oBeacon = BLEBeacon();
+              oBeacon.setManufacturerId(0x4c00);   //company ID
+              oBeacon.setProximityUUID(BLEUUID(BEACON_UUID));    //UUID
+              oBeacon.setMajor((4<<8)+3);
+              oBeacon.setMinor(3);
+              BLEAdvertisementData oAdvertisementData = BLEAdvertisementData();
+              oAdvertisementData.setFlags(0x04);
+              oAdvertisementData.setManufacturerData(oBeacon.getData());
+              pAdvertising = BLEDevice::getAdvertising();
+              pAdvertising->setAdvertisementData(oAdvertisementData);
+              pAdvertising->setScanResponseData(oAdvertisementData);
+              pAdvertising->start();
+
+              for(int tn = 0; tn<24; tn++){
+                int nd=1000/nds[tn];
+                tone(speakerpin, melody[tn],nd);
+                int pbn = nd*1.30;
+                delay(pbn);
+                noTone(speakerpin);
+            }
+          }
+          else{
+            unsigned long currentMillis = millis();
+            // 1분 이상 경과한 경우
+            if (currentMillis - lastSignalTime >= NO_SIGNAL_DURATION) {
+              // 절전 모드로 진입
+              sleepMode();
+            }
+          }
       }
     }
+  }
 };
-
-
-void sleepMode() {
-    Serial.println("절전 모드로 진입합니다..");
-    //PlayPause();
-    BLEDevice::deinit();
-    esp_deep_sleep(SLEEP_DURATION * 1000000);
-}
 
 void setup() {
   Serial.begin(115200);
@@ -110,8 +165,8 @@ void setup() {
   BLEBeacon oBeacon = BLEBeacon();
   oBeacon.setManufacturerId(0x4c00);   //company ID
   oBeacon.setProximityUUID(BLEUUID(BEACON_UUID));    //UUID
-  oBeacon.setMajor((1<<8)+1);  // 0000 0001 0000 0001
-  oBeacon.setMinor(0);
+  oBeacon.setMajor((3<<8)+1);  // 0000 0003 0000 0001
+  oBeacon.setMinor(3);
   
   // 외부로 송출할 데이터 변수 생성하고 변수에 비콘 데이터 담아서 송출
   std::string strServiceData = "";
@@ -143,7 +198,15 @@ void setup() {
 void loop() {
   BLEScanResults foundDevices = pBLEScan->start(SCAN_PERIOD, false);
   // 찾은 기기 major, minor 값 변하는지 지켜보기
-  for (int i = 0; i < foundDevices.getCount(); i++) {
+
+  //실행 카운트
+  //count+=1;
+}
+/*
+
+
+
+for (int i = 0; i < foundDevices.getCount(); i++) {
     BLEAdvertisedDevice advertisedDevice = foundDevices.getDevice(i);
     if (advertisedDevice.haveManufacturerData() && advertisedDevice.getManufacturerData().length() == 25 &&
         advertisedDevice.getManufacturerData()[0] == 0x4c && advertisedDevice.getManufacturerData()[1] == 0x00 &&
@@ -154,86 +217,18 @@ void loop() {
           std::string payload = advertisedDevice.getManufacturerData();
           uint16_t currentMajor = payload[20] << 8 | payload[21];
           uint16_t currentMinor = payload[22] << 8 | payload[23];
+
           Serial.println(currentMajor);
           Serial.println(currentMinor);
 
-          // Major, Minor 값을 업데이트
-          previousMajor = currentMajor;
-          previousMinor = currentMinor;                           //이거 현재 major 값이랑 이전 major 값 비교해야되는데 계속 업이트하니깐 당연히 조건문에 안들어감 이거 수정 해ㅔ야됨
+          //이거 현재 major 값이랑 이전 major 값 비교해야되는데 계속 업이트하니깐 당연히 조건문에 안들어감 이거 수정 해ㅔ야됨
 
           Serial.println(previousMajor);
           Serial.println(previousMinor);
 
-          /*if(count==0){
-            //비콘 찾아서 신호 보내주려고 major, minor 값 바꿔서 전송
-
-            if (currentMajor == (1<<8) && currentMinor == 0) {
-              Serial.println("주변 스캔신호~!!");
-              Scan = true;
-            }
-            else if(currentMajor == (3<<8) && currentMinor == 0){
-              Serial.println("노래 재생신호~!!");
-              Playsong = true;
-            }
-          }*/
-          //else if(count>=1){
-          if (currentMajor != previousMajor || currentMinor != previousMinor) {
-            // 원하는 비콘의 Major, Minor 값이 변경되면 실행할 코드 작성
-            Serial.println("비콘의 Major 또는 Minor 값이 변경되었습니다.");
-
-            if (currentMajor == (1<<8) && currentMinor == 0) {
-              Serial.println("주변 스캔신호~!!");
-              Scan = true;
-            }
-            else if(currentMajor == (3<<8) && currentMinor == 0){
-              Serial.println("노래 재생신호~!!");
-              Playsong = true;
-            }
-          }
-          else{
-            unsigned long currentMillis = millis();
-            // 1분 이상 경과한 경우
-            if (currentMillis - lastSignalTime >= NO_SIGNAL_DURATION) {
-              // 절전 모드로 진입
-              sleepMode();
-            }
-          }
         isBeaconDetected = true;
     }
     // 스캔 명령을 받은 경우, 주변 스캔 수행
-    if (Scan) {
-      Serial.println("주변을 스캔합니다.");
-      pBLEScan->start(SCAN_PERIOD, true);
-      Scan = false;
-    }
-    
-    // 노래 재생 명령을 받은 경우, 노래 재생 수행
-    else if (Playsong) {
-      Serial.println("노래를 재생합니다.");
-      //비콘 찾아서 신호 보내주려고 major, minor 값 바꿔서 전송
-      BLEBeacon oBeacon = BLEBeacon();
-      oBeacon.setManufacturerId(0x4c00);   //company ID
-      oBeacon.setProximityUUID(BLEUUID(BEACON_UUID));    //UUID
-      oBeacon.setMajor((4<<8)+1);
-      oBeacon.setMinor(0);
-      BLEAdvertisementData oAdvertisementData = BLEAdvertisementData();
-      oAdvertisementData.setFlags(0x04);
-      oAdvertisementData.setManufacturerData(oBeacon.getData());
-      pAdvertising = BLEDevice::getAdvertising();
-      pAdvertising->setAdvertisementData(oAdvertisementData);
-      pAdvertising->setScanResponseData(oAdvertisementData);
-      pAdvertising->start();
-
-      for(int tn = 0; tn<24; tn++){
-        int nd=1000/nds[tn];
-        tone(speakerpin, melody[tn],nd);
-        int pbn = nd*1.30;
-        delay(pbn);
-        noTone(speakerpin);
-      }  //학교종이 땡땡땡 출력
-
-      Playsong = false;
-    }
   }
 
   // 원하는 비콘이 감지되지 않은 경우
@@ -248,12 +243,12 @@ void loop() {
   // 감지 여부 초기화
   isBeaconDetected = false;
 
-  //실행 카운트
-  count+=1;
-}
+
+
 
 // 딥슬립에서 깨어났을 때 실행되는 함수
 extern "C" void app_mam() {
     setup();
     loop();
 }
+*/

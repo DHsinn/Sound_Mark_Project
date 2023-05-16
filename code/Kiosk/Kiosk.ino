@@ -5,42 +5,31 @@
 #include "BLEBeacon.h"
 #include "esp_sleep.h"
 
-//---------------------------------------------------------------Gate1 코드---------------------------------------------------------------
+//---------------------------------------------------------------kiosk 코드---------------------------------------------------------------
 
 // iBeacon UUID
 #define BEACON_UUID "8ec76ea3-6668-48da-9866-75be8bc86f4d"
 #define TEST_BEACON_UUID "39ED98FF-2900-441A-802F-9C398FC199D2"
-//#define ManufacturerData "4c00021539ed98ff2900441a802f9c398fc199d2"
-//4c00021539ed98ff2900441a802f9c398fc199d203000001c5
 
 // 스캔 주기 및 스캔 시간
-//#define SCAN_PERIOD 10  //스캔주기 초
 #define SCAN_INTERVAL 100
 
-int previousMajor = 40; // 이전에 체크한 비콘의 Major 값
-int previousMinor = 15; // 이전에 체크한 비콘의 Minor 값
+int previousMajor = 26; // 이전에 체크한 비콘의 Major 값
+int previousMinor = 18; // 이전에 체크한 비콘의 Minor 값
 const int SCAN_PERIOD = 10000; // 스캔 주기 (ms)
 int count = 0;  //loop 횟수
 
+//절전 모드
+unsigned long lastSignalTime = 0;     //마지막으로 신호가 들어온 거 체크
+const int NO_SIGNAL_DURATION = 60 * 1000; // 60초
 
 //스피커 연결 핀번호 (GIOP 번호)
 #define speakerpin 23
-#include "pitches.h" //음계
-//학교종이 땡땡땡
-int melody[] = {NOTE_G7,NOTE_G7,NOTE_A7,NOTE_A7,NOTE_G7,NOTE_G7,NOTE_E7,NOTE_G7,
-NOTE_G7,NOTE_E7,NOTE_E7,NOTE_D7,NOTE_G7,NOTE_G7,NOTE_A7,NOTE_A7,
-NOTE_G7,NOTE_G7,NOTE_E7,NOTE_G7,NOTE_E7,NOTE_D7,NOTE_E7,NOTE_C7};
-int nds[] = {4,4,4,4,4,4,2,4,4,4,4,1,4,4,4,4,4,4,2,4,4,4,4,1};
 
 //오디오
 #include <SoftwareSerial.h>
 #include <MP3Player_KT403A.h>
 SoftwareSerial mp3(17, 16); //TX, RX  (GIOP 번호)
-
-//절전모드
-#define SLEEP_DURATION 5 // 절전 모드 시간 (초)
-unsigned long lastSignalTime = 0;     //마지막으로 신호가 들어온 거 체크
-const int NO_SIGNAL_DURATION = 60 * 1000; // 60초
 
 BLEAdvertising *pAdvertising;   //송출 포인터설정
 BLEScan* pBLEScan;   //스캔포인터설정
@@ -48,18 +37,19 @@ bool isBeaconDetected = false;   //아이비콘을 찾았다면 true 값으로 �
 bool Scan = false;
 bool Playsong = false;
 
+//타이머
+const int no_song = 5 * 1000;  //5초
+unsigned long currentMillis = millis();
+
 
 void sleepMode() {
     Serial.println("절전 모드로 진입합니다..");
     //PlayPause();
-    pBLEScan->clearResults();
+    BLEDevice::deinit();
     setup();
     loop();
-    //BLEDevice::deinit();
     //esp_deep_sleep(SLEEP_DURATION * 1000000);
 }
-
-
 
 //비콘 manufacturerr data 로 감지하는 클래스
 class MyAdvertisedDeviceCallbacks: public BLEAdvertisedDeviceCallbacks {
@@ -75,15 +65,13 @@ class MyAdvertisedDeviceCallbacks: public BLEAdvertisedDeviceCallbacks {
           advertisedDevice.getManufacturerData()[0] == 0x4c && advertisedDevice.getManufacturerData()[1] == 0x00 &&
           advertisedDevice.getManufacturerData()[2] == 0x02 &&  advertisedDevice.getManufacturerData()[3] == 0x15 &&   //여기까지는 아이비콘 기본구성
           advertisedDevice.getManufacturerData()[4] == 0x39 &&  advertisedDevice.getManufacturerData()[5] == 0xed &&   //여기부터 uuid
-          advertisedDevice.getManufacturerData()[6] == 0x98 &&  advertisedDevice.getManufacturerData()[7] == 0xff) { 
-            /*
-            advertisedDevice.getManufacturerData()[8] == 0x29 &&  advertisedDevice.getManufacturerData()[9] == 0x00 &&
+          advertisedDevice.getManufacturerData()[6] == 0x98 &&  advertisedDevice.getManufacturerData()[7] == 0xff &&
+          advertisedDevice.getManufacturerData()[8] == 0x29 &&  advertisedDevice.getManufacturerData()[9] == 0x00 &&
           advertisedDevice.getManufacturerData()[10] == 0x44 &&  advertisedDevice.getManufacturerData()[11] == 0x1a &&
           advertisedDevice.getManufacturerData()[12] == 0x80 &&  advertisedDevice.getManufacturerData()[13] == 0x2f &&
           advertisedDevice.getManufacturerData()[14] == 0x9c &&  advertisedDevice.getManufacturerData()[15] == 0x39 &&
           advertisedDevice.getManufacturerData()[16] == 0x8f &&  advertisedDevice.getManufacturerData()[17] == 0xc1 &&
-          advertisedDevice.getManufacturerData()[18] == 0x99 &&  advertisedDevice.getManufacturerData()[19] == 0xd2
-            */
+          advertisedDevice.getManufacturerData()[18] == 0x99 &&  advertisedDevice.getManufacturerData()[19] == 0xd2) {
         
         Serial.println("지정된 iBeacon 탐색됨.");
 
@@ -91,8 +79,8 @@ class MyAdvertisedDeviceCallbacks: public BLEAdvertisedDeviceCallbacks {
         BLEBeacon oBeacon = BLEBeacon();
         oBeacon.setManufacturerId(0x4c00);   //company ID
         oBeacon.setProximityUUID(BLEUUID(BEACON_UUID));    //UUID
-        oBeacon.setMajor((2<<8)+3);  // 0000 0001 0000 0003
-        oBeacon.setMinor(3);
+        oBeacon.setMajor((2<<8)+1);  // 0000 0001 0000 0001
+        oBeacon.setMinor(1);
         BLEAdvertisementData oAdvertisementData = BLEAdvertisementData();
         oAdvertisementData.setFlags(0x04);
         oAdvertisementData.setManufacturerData(oBeacon.getData());
@@ -117,35 +105,53 @@ class MyAdvertisedDeviceCallbacks: public BLEAdvertisedDeviceCallbacks {
 
             //Serial.println("비콘의 Major 또는 Minor 값이 변경되었습니다.");
 
-        if (currentMajor == (1<<8) && currentMinor == 3) {
-          Serial.println("주변 스캔신호~!!");
-          Serial.println("주변을 스캔합니다.");
-          pBLEScan->start(SCAN_PERIOD, true);
-          Scan = false;
-        }
+            if (currentMajor == (1<<8) && currentMinor == 1) {
+              Serial.println("주변 스캔신호~!!");
+              Serial.println("주변을 스캔합니다.");
+              pBLEScan->start(SCAN_PERIOD, true);
+              Scan = false;
+            }
 
-        else if(currentMajor == (3<<8) && currentMinor == 3){ //&& millis() - lastSongPlayTime >= SONG_IGNORE_DURATION
+            else if(currentMajor == (3<<8) && currentMinor == 1 && millis() - lastSongPlayTime >= SONG_IGNORE_DURATION){
+              lastSongPlayTime = millis();
 
-          Serial.println("노래 재생신호~!!");
-          Serial.println("노래를 재생합니다.");
-          //비콘 찾아서 신호 보내주려고 major, minor 값 바꿔서 전송
-          BLEBeacon oBeacon = BLEBeacon();
-          oBeacon.setManufacturerId(0x4c00);   //company ID
-          oBeacon.setProximityUUID(BLEUUID(BEACON_UUID));    //UUID
-          oBeacon.setMajor((4<<8)+3);
-          oBeacon.setMinor(3);
-          BLEAdvertisementData oAdvertisementData = BLEAdvertisementData();
-          oAdvertisementData.setFlags(0x04);
-          oAdvertisementData.setManufacturerData(oBeacon.getData());
-          pAdvertising = BLEDevice::getAdvertising();
-          pAdvertising->setAdvertisementData(oAdvertisementData);
-          pAdvertising->setScanResponseData(oAdvertisementData);
-          pAdvertising->start();
+              Serial.println("노래 재생신호~!!");
+              Serial.println("노래를 재생합니다.");
+              //비콘 찾아서 신호 보내주려고 major, minor 값 바꿔서 전송
+              BLEBeacon oBeacon = BLEBeacon();
+              oBeacon.setManufacturerId(0x4c00);   //company ID
+              oBeacon.setProximityUUID(BLEUUID(BEACON_UUID));    //UUID
+              oBeacon.setMajor((4<<8)+1);
+              oBeacon.setMinor(1);
+              BLEAdvertisementData oAdvertisementData = BLEAdvertisementData();
+              oAdvertisementData.setFlags(0x04);
+              oAdvertisementData.setManufacturerData(oBeacon.getData());
+              pAdvertising = BLEDevice::getAdvertising();
+              pAdvertising->setAdvertisementData(oAdvertisementData);
+              pAdvertising->setScanResponseData(oAdvertisementData);
+              pAdvertising->start();
 
-          SpecifyMusicPlay(1);
-          //tone(speakerpin, 1000,500);
-          //noTone(speakerpin); // 사운드 출력 중지
-          }
+              SpecifyMusicPlay(1);
+            }
+            /*
+            if (Playsong && millis() - lastSongPlayTime >= SONG_IGNORE_DURATION) {
+                Playsong = false;
+
+                BLEBeacon oBeacon = BLEBeacon();
+                oBeacon.setManufacturerId(0x4c00);   //company ID
+                oBeacon.setProximityUUID(BLEUUID(BEACON_UUID));    //UUID
+                oBeacon.setMajor((2<<8)+1);  // 0000 0001 0000 0001
+                oBeacon.setMinor(1);
+                BLEAdvertisementData oAdvertisementData = BLEAdvertisementData();
+                oAdvertisementData.setFlags(0x04);
+                oAdvertisementData.setManufacturerData(oBeacon.getData());
+                pAdvertising = BLEDevice::getAdvertising();
+                pAdvertising->setAdvertisementData(oAdvertisementData);
+                pAdvertising->setScanResponseData(oAdvertisementData);
+                pAdvertising->start();
+              }*/
+
+          //}
           /*
           else{
             unsigned long currentMillis = millis();
@@ -155,7 +161,6 @@ class MyAdvertisedDeviceCallbacks: public BLEAdvertisedDeviceCallbacks {
               sleepMode();
             }
           }*/
-
       }
     }
   };
@@ -170,8 +175,8 @@ void setup() {
   BLEBeacon oBeacon = BLEBeacon();
   oBeacon.setManufacturerId(0x4c00);   //company ID
   oBeacon.setProximityUUID(BLEUUID(BEACON_UUID));    //UUID
-  oBeacon.setMajor((2<<8)+3);  // 0000 0003 0000 0001
-  oBeacon.setMinor(3);
+  oBeacon.setMajor((1<<8)+1);  // 0000 0003 0000 0001
+  oBeacon.setMinor(1);
   
   // 외부로 송출할 데이터 변수 생성하고 변수에 비콘 데이터 담아서 송출
   std::string strServiceData = "";
@@ -179,8 +184,6 @@ void setup() {
   strServiceData += (char)0xFF;   // 데이터 유형 0xFF  
   strServiceData += oBeacon.getData();
 
-  lastSignalTime = millis();  // 타이머 초기화
-  
   //---------------------mp3 구성-------------------
     mp3.begin(9600);
     delay(100);
@@ -202,61 +205,25 @@ void setup() {
 
 void loop() {
   BLEScanResults foundDevices = pBLEScan->start(SCAN_PERIOD, false);
-  //lastSignalTime = millis();  // 타이머 초기화
-  // 찾은 기기 major, minor 값 변하는지 지켜보기
-
-  //실행 카운트
-  //count+=1;
+  lastSignalTime = millis();  // 타이머 초기화
+  /*
+  unsigned long currentMillis = millis();
+  // 1분 이상 경과한 경우
+  if (currentMillis - lastSignalTime >= NO_SIGNAL_DURATION) {
+    // 절전 모드로 진입
+    sleepMode();
+  }*/
 }
-/*
 
 
 
 
 
-for (int i = 0; i < foundDevices.getCount(); i++) {
-    BLEAdvertisedDevice advertisedDevice = foundDevices.getDevice(i);
-    if (advertisedDevice.haveManufacturerData() && advertisedDevice.getManufacturerData().length() == 25 &&
-        advertisedDevice.getManufacturerData()[0] == 0x4c && advertisedDevice.getManufacturerData()[1] == 0x00 &&
-        advertisedDevice.getManufacturerData()[2] == 0x02 &&  advertisedDevice.getManufacturerData()[3] == 0x15) {
-
-          Serial.println("들어오나요~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
-          //그냥 이걸로 major, minor 값 받아오기
-          std::string payload = advertisedDevice.getManufacturerData();
-          uint16_t currentMajor = payload[20] << 8 | payload[21];
-          uint16_t currentMinor = payload[22] << 8 | payload[23];
-
-          Serial.println(currentMajor);
-          Serial.println(currentMinor);
-
-          //이거 현재 major 값이랑 이전 major 값 비교해야되는데 계속 업이트하니깐 당연히 조건문에 안들어감 이거 수정 해ㅔ야됨
-
-          Serial.println(previousMajor);
-          Serial.println(previousMinor);
-
-        isBeaconDetected = true;
-    }
-    // 스캔 명령을 받은 경우, 주변 스캔 수행
-  }
-
-  // 원하는 비콘이 감지되지 않은 경우
-  if (!isBeaconDetected) {
-    unsigned long currentMillis = millis();
-     // 1분 이상 경과한 경우
-    if (currentMillis - lastSignalTime >= NO_SIGNAL_DURATION) {
-      // 절전 모드로 진입
-      sleepMode();
-    }
-  }
-  // 감지 여부 초기화
-  isBeaconDetected = false;
 
 
 
 
-// 딥슬립에서 깨어났을 때 실행되는 함수
-extern "C" void app_mam() {
-    setup();
-    loop();
-}
-*/
+
+
+
+

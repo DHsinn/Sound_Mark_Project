@@ -68,7 +68,7 @@ class MyAdvertisedDeviceCallbacks: public BLEAdvertisedDeviceCallbacks {
         BLEBeacon oBeacon = BLEBeacon();
         oBeacon.setManufacturerId(0x4c00);   //company ID
         oBeacon.setProximityUUID(BLEUUID(BEACON_UUID));    //UUID
-        oBeacon.setMajor((1<<8)+1);  // 0000 0001 0000 0001
+        oBeacon.setMajor((2<<8)+1);  // 0000 0001 0000 0001
         oBeacon.setMinor(1);
         BLEAdvertisementData oAdvertisementData = BLEAdvertisementData();
         oAdvertisementData.setFlags(0x04);
@@ -116,7 +116,7 @@ void setup() {
   BLEBeacon oBeacon = BLEBeacon();
   oBeacon.setManufacturerId(0x4c00);   //company ID
   oBeacon.setProximityUUID(BLEUUID(BEACON_UUID));    //UUID
-  oBeacon.setMajor((1<<8)+1);  // 0000 0001 0000 0001
+  oBeacon.setMajor((2<<8)+1);  // 0000 0001 0000 0001
   oBeacon.setMinor(1);
   
   // 외부로 송출할 데이터 변수 생성하고 변수에 비콘 데이터 담아서 송출
@@ -278,7 +278,7 @@ extern "C" void app_mam() {
 }
 
 
-  
+  /*
   unsigned long currentTime = millis();
   unsigned long timeDiff = currentTime - lastSignalTime;
   lastSignalTime = currentTime;

@@ -50,7 +50,7 @@ bool Playsong = false;
 
 
 void sleepMode() {
-    Serial.println("절전 모드로 진입합니다..");
+    //Serial.println("절전 모드로 진입합니다..");
     //PlayPause();
     pBLEScan->clearResults();
     setup();
@@ -68,7 +68,7 @@ class MyAdvertisedDeviceCallbacks: public BLEAdvertisedDeviceCallbacks {
   const unsigned long SONG_IGNORE_DURATION = 50; // 노래 재생 신호를 무시할 시간(밀리초)
 
     void onResult(BLEAdvertisedDevice advertisedDevice) {
-      Serial.printf("Advertised Device: %s \n", advertisedDevice.toString().c_str());
+      //Serial.printf("Advertised Device: %s \n", advertisedDevice.toString().c_str());
 
       // iBeacon 감지 (manufacturerdata가 있는지 확인하고 iBeacon 패킷 구성에 맞는 manufacturerData인지 확인하기)
       if (advertisedDevice.haveManufacturerData() && advertisedDevice.getManufacturerData().length() == 25 &&
@@ -85,7 +85,7 @@ class MyAdvertisedDeviceCallbacks: public BLEAdvertisedDeviceCallbacks {
           advertisedDevice.getManufacturerData()[18] == 0x99 &&  advertisedDevice.getManufacturerData()[19] == 0xd2
             */
         
-        Serial.println("지정된 iBeacon 탐색됨.");
+        //Serial.println("지정된 iBeacon 탐색됨.");
 
         //비콘 찾은 후 신호 방출
         BLEBeacon oBeacon = BLEBeacon();
@@ -118,16 +118,16 @@ class MyAdvertisedDeviceCallbacks: public BLEAdvertisedDeviceCallbacks {
             //Serial.println("비콘의 Major 또는 Minor 값이 변경되었습니다.");
 
         if (currentMajor == (1<<8) && currentMinor == 3) {
-          Serial.println("주변 스캔신호~!!");
-          Serial.println("주변을 스캔합니다.");
+          //Serial.println("주변 스캔신호~!!");
+          //Serial.println("주변을 스캔합니다.");
           pBLEScan->start(SCAN_PERIOD, true);
           Scan = false;
         }
 
         else if(currentMajor == (3<<8) && currentMinor == 3){ //&& millis() - lastSongPlayTime >= SONG_IGNORE_DURATION
 
-          Serial.println("노래 재생신호~!!");
-          Serial.println("노래를 재생합니다.");
+          //Serial.println("노래 재생신호~!!");
+          //Serial.println("노래를 재생합니다.");
           //비콘 찾아서 신호 보내주려고 major, minor 값 바꿔서 전송
           BLEBeacon oBeacon = BLEBeacon();
           oBeacon.setManufacturerId(0x4c00);   //company ID
@@ -161,7 +161,7 @@ class MyAdvertisedDeviceCallbacks: public BLEAdvertisedDeviceCallbacks {
   };
 
 void setup() {
-  Serial.begin(115200);
+  //Serial.begin(115200);
 
   //--------------------비콘구성---------------------
   BLEDevice::init("RIVO_iBeacon");

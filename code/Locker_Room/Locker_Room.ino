@@ -54,8 +54,7 @@ void t2Task() {
 void setup() {
   // 시리얼 통신 초기화 등 초기 설정 작업
   Serial.begin(115200);
-
-
+  
   BLEDevice::init("RIVO_iBeacon"); // BLE을 생성
   pBLEScan = BLEDevice::getScan(); // 새로운 스캔 객체 생성
   //pBLEScan->setAdvertisedDeviceCallbacks(new MyAdvertisedDeviceCallbacks());

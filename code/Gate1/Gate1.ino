@@ -25,12 +25,6 @@ int count = 0;  //loop 횟수
 
 //스피커 연결 핀번호 (GIOP 번호)
 #define speakerpin 23
-#include "pitches.h" //음계
-//학교종이 땡땡땡
-int melody[] = {NOTE_G7,NOTE_G7,NOTE_A7,NOTE_A7,NOTE_G7,NOTE_G7,NOTE_E7,NOTE_G7,
-NOTE_G7,NOTE_E7,NOTE_E7,NOTE_D7,NOTE_G7,NOTE_G7,NOTE_A7,NOTE_A7,
-NOTE_G7,NOTE_G7,NOTE_E7,NOTE_G7,NOTE_E7,NOTE_D7,NOTE_E7,NOTE_C7};
-int nds[] = {4,4,4,4,4,4,2,4,4,4,4,1,4,4,4,4,4,4,2,4,4,4,4,1};
 
 //오디오
 #include <SoftwareSerial.h>
@@ -48,7 +42,7 @@ bool isBeaconDetected = false;   //아이비콘을 찾았다면 true 값으로 �
 bool Scan = false;
 bool Playsong = false;
 
-
+/*
 void sleepMode() {
     //Serial.println("절전 모드로 진입합니다..");
     //PlayPause();
@@ -58,13 +52,13 @@ void sleepMode() {
     //BLEDevice::deinit();
     //esp_deep_sleep(SLEEP_DURATION * 1000000);
 }
-
+*/
 
 
 //비콘 manufacturerr data 로 감지하는 클래스
 class MyAdvertisedDeviceCallbacks: public BLEAdvertisedDeviceCallbacks {
 
-  unsigned long lastSongPlayTime = 0;
+  unsigned long lastSongPlayTime = 0;        //마지막으로 플레이한 시간
   const unsigned long SONG_IGNORE_DURATION = 50; // 노래 재생 신호를 무시할 시간(밀리초)
 
     void onResult(BLEAdvertisedDevice advertisedDevice) {
@@ -107,7 +101,7 @@ class MyAdvertisedDeviceCallbacks: public BLEAdvertisedDeviceCallbacks {
         std::string payload = advertisedDevice.getManufacturerData();
         uint16_t currentMajor = payload[20] << 8 | payload[21];
         uint16_t currentMinor = payload[22] << 8 | payload[23];
-        Serial.printf("Major: %d, Minor: %d\n", currentMajor, currentMinor);
+        //Serial.printf("Major: %d, Minor: %d\n", currentMajor, currentMinor);
 
         //if (currentMajor != previousMajor || currentMinor != previousMinor) {
             // 원하는 비콘의 Major, Minor 값이 변경되면 실행할 코드 작성

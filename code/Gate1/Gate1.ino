@@ -19,7 +19,7 @@
 
 int previousMajor = 40; // 이전에 체크한 비콘의 Major 값
 int previousMinor = 15; // 이전에 체크한 비콘의 Minor 값
-const int SCAN_PERIOD = 10000; // 스캔 주기 (ms)
+const int SCAN_PERIOD = 10000; // 스캔 주기 (ms, 10초)
 int count = 0;  //loop 횟수
 
 
@@ -69,16 +69,16 @@ class MyAdvertisedDeviceCallbacks: public BLEAdvertisedDeviceCallbacks {
           advertisedDevice.getManufacturerData()[0] == 0x4c && advertisedDevice.getManufacturerData()[1] == 0x00 &&
           advertisedDevice.getManufacturerData()[2] == 0x02 &&  advertisedDevice.getManufacturerData()[3] == 0x15 &&   //여기까지는 아이비콘 기본구성
           advertisedDevice.getManufacturerData()[4] == 0x39 &&  advertisedDevice.getManufacturerData()[5] == 0xed &&   //여기부터 uuid
-          advertisedDevice.getManufacturerData()[6] == 0x98 &&  advertisedDevice.getManufacturerData()[7] == 0xff) { 
+          advertisedDevice.getManufacturerData()[6] == 0x98 &&  advertisedDevice.getManufacturerData()[7] == 0xff &&
+          advertisedDevice.getManufacturerData()[8] == 0x29 &&  advertisedDevice.getManufacturerData()[9] == 0x00 ){
             /*
-          advertisedDevice.getManufacturerData()[8] == 0x29 &&  advertisedDevice.getManufacturerData()[9] == 0x00 &&
           advertisedDevice.getManufacturerData()[10] == 0x44 &&  advertisedDevice.getManufacturerData()[11] == 0x1a &&
           advertisedDevice.getManufacturerData()[12] == 0x80 &&  advertisedDevice.getManufacturerData()[13] == 0x2f &&
           advertisedDevice.getManufacturerData()[14] == 0x9c &&  advertisedDevice.getManufacturerData()[15] == 0x39 &&
           advertisedDevice.getManufacturerData()[16] == 0x8f &&  advertisedDevice.getManufacturerData()[17] == 0xc1 &&
-          advertisedDevice.getManufacturerData()[18] == 0x99 &&  advertisedDevice.getManufacturerData()[19] == 0xd2
-            */
-        
+          advertisedDevice.getManufacturerData()[18] == 0x99 &&  advertisedDevice.getManufacturerData()[19] == 0xd2 ) { 
+          */
+
         //Serial.println("지정된 iBeacon 탐색됨.");
 
         //비콘 찾은 후 신호 방출
@@ -164,7 +164,7 @@ void setup() {
   BLEBeacon oBeacon = BLEBeacon();
   oBeacon.setManufacturerId(0x4c00);   //company ID
   oBeacon.setProximityUUID(BLEUUID(BEACON_UUID));    //UUID
-  oBeacon.setMajor((2<<8)+3);  // 0000 0003 0000 0001
+  oBeacon.setMajor((2<<8)+3);
   oBeacon.setMinor(3);
   
   // 외부로 송출할 데이터 변수 생성하고 변수에 비콘 데이터 담아서 송출
@@ -177,7 +177,7 @@ void setup() {
   
   //---------------------mp3 구성-------------------
     mp3.begin(9600);
-    delay(100);
+    //delay(100);
     
     SelectPlayerDevice(0x02);       // Select SD card as the player device. 내 디바이스에 있는 SD카드에서 파일 가져오기
     SetVolume(0x1E);        //볼륨설정하기 최대 0x1E
@@ -202,55 +202,3 @@ void loop() {
   //실행 카운트
   //count+=1;
 }
-/*
-
-
-
-
-
-for (int i = 0; i < foundDevices.getCount(); i++) {
-    BLEAdvertisedDevice advertisedDevice = foundDevices.getDevice(i);
-    if (advertisedDevice.haveManufacturerData() && advertisedDevice.getManufacturerData().length() == 25 &&
-        advertisedDevice.getManufacturerData()[0] == 0x4c && advertisedDevice.getManufacturerData()[1] == 0x00 &&
-        advertisedDevice.getManufacturerData()[2] == 0x02 &&  advertisedDevice.getManufacturerData()[3] == 0x15) {
-
-          Serial.println("들어오나요~!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
-          //그냥 이걸로 major, minor 값 받아오기
-          std::string payload = advertisedDevice.getManufacturerData();
-          uint16_t currentMajor = payload[20] << 8 | payload[21];
-          uint16_t currentMinor = payload[22] << 8 | payload[23];
-
-          Serial.println(currentMajor);
-          Serial.println(currentMinor);
-
-          //이거 현재 major 값이랑 이전 major 값 비교해야되는데 계속 업이트하니깐 당연히 조건문에 안들어감 이거 수정 해ㅔ야됨
-
-          Serial.println(previousMajor);
-          Serial.println(previousMinor);
-
-        isBeaconDetected = true;
-    }
-    // 스캔 명령을 받은 경우, 주변 스캔 수행
-  }
-
-  // 원하는 비콘이 감지되지 않은 경우
-  if (!isBeaconDetected) {
-    unsigned long currentMillis = millis();
-     // 1분 이상 경과한 경우
-    if (currentMillis - lastSignalTime >= NO_SIGNAL_DURATION) {
-      // 절전 모드로 진입
-      sleepMode();
-    }
-  }
-  // 감지 여부 초기화
-  isBeaconDetected = false;
-
-
-
-
-// 딥슬립에서 깨어났을 때 실행되는 함수
-extern "C" void app_mam() {
-    setup();
-    loop();
-}
-*/

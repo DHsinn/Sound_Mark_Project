@@ -58,8 +58,19 @@ void sleepMode() {
 //비콘 manufacturerr data 로 감지하는 클래스
 class MyAdvertisedDeviceCallbacks: public BLEAdvertisedDeviceCallbacks {
 
-  unsigned long lastSongPlayTime = 0;        //마지막으로 플레이한 시간
-  const unsigned long SONG_IGNORE_DURATION = 50; // 노래 재생 신호를 무시할 시간(밀리초)
+  //unsigned long lastSongPlayTime = 0;        //마지막으로 플레이한 시간
+  //const unsigned long SONG_IGNORE_DURATION = 50; // 노래 재생 신호를 무시할 시간(밀리초)
+  private:
+  BLEBeacon oBeacon;
+  BLEAdvertisementData oAdvertisementData;
+  //BLEAdvertising* pAdvertising;
+
+  public:
+  MyAdvertisedDeviceCallbacks(){
+    oBeacon = BLEBeacon();
+    oAdvertisementData = BLEAdvertisementData();
+    pAdvertising = BLEDevice::getAdvertising();
+  }
 
     void onResult(BLEAdvertisedDevice advertisedDevice) {
       //Serial.printf("Advertised Device: %s \n", advertisedDevice.toString().c_str());
@@ -82,15 +93,15 @@ class MyAdvertisedDeviceCallbacks: public BLEAdvertisedDeviceCallbacks {
         //Serial.println("지정된 iBeacon 탐색됨.");
 
         //비콘 찾은 후 신호 방출
-        BLEBeacon oBeacon = BLEBeacon();
         oBeacon.setManufacturerId(0x4c00);   //company ID
         oBeacon.setProximityUUID(BLEUUID(BEACON_UUID));    //UUID
         oBeacon.setMajor((2<<8)+3);  // 0000 0001 0000 0003
         oBeacon.setMinor(3);
-        BLEAdvertisementData oAdvertisementData = BLEAdvertisementData();
+
         oAdvertisementData.setFlags(0x04);
         oAdvertisementData.setManufacturerData(oBeacon.getData());
-        pAdvertising = BLEDevice::getAdvertising();
+
+        //pAdvertising = BLEDevice::getAdvertising();
         pAdvertising->setAdvertisementData(oAdvertisementData);
         pAdvertising->setScanResponseData(oAdvertisementData);
         pAdvertising->start();
@@ -123,20 +134,21 @@ class MyAdvertisedDeviceCallbacks: public BLEAdvertisedDeviceCallbacks {
           //Serial.println("노래 재생신호~!!");
           //Serial.println("노래를 재생합니다.");
           //비콘 찾아서 신호 보내주려고 major, minor 값 바꿔서 전송
-          BLEBeacon oBeacon = BLEBeacon();
           oBeacon.setManufacturerId(0x4c00);   //company ID
           oBeacon.setProximityUUID(BLEUUID(BEACON_UUID));    //UUID
           oBeacon.setMajor((4<<8)+3);
           oBeacon.setMinor(3);
-          BLEAdvertisementData oAdvertisementData = BLEAdvertisementData();
+
           oAdvertisementData.setFlags(0x04);
           oAdvertisementData.setManufacturerData(oBeacon.getData());
-          pAdvertising = BLEDevice::getAdvertising();
+
+          //pAdvertising = BLEDevice::getAdvertising();
           pAdvertising->setAdvertisementData(oAdvertisementData);
           pAdvertising->setScanResponseData(oAdvertisementData);
           pAdvertising->start();
 
           SpecifyMusicPlay(1);
+
           //tone(speakerpin, 1000,500);
           //noTone(speakerpin); // 사운드 출력 중지
           }
@@ -158,20 +170,20 @@ void setup() {
   //Serial.begin(115200);
 
   //--------------------비콘구성---------------------
-  BLEDevice::init("RIVO_iBeacon");
+  //BLEDevice::init("RIVO_iBeacon");
   //BLEDevice::startAdvertising();
 
-  BLEBeacon oBeacon = BLEBeacon();
-  oBeacon.setManufacturerId(0x4c00);   //company ID
-  oBeacon.setProximityUUID(BLEUUID(BEACON_UUID));    //UUID
-  oBeacon.setMajor((2<<8)+3);
-  oBeacon.setMinor(3);
+  //BLEBeacon oBeacon = BLEBeacon();
+  //oBeacon.setManufacturerId(0x4c00);   //company ID
+  //oBeacon.setProximityUUID(BLEUUID(BEACON_UUID));    //UUID
+  //oBeacon.setMajor((2<<8)+3);
+  //oBeacon.setMinor(3);
   
   // 외부로 송출할 데이터 변수 생성하고 변수에 비콘 데이터 담아서 송출
-  std::string strServiceData = "";
-  strServiceData += (char)26;     // 데이터 길이가 총 26인데 이중 데이터가 25, 데이터 유형 1바이트
-  strServiceData += (char)0xFF;   // 데이터 유형 0xFF  
-  strServiceData += oBeacon.getData();
+  //std::string strServiceData = "";
+  //strServiceData += (char)26;     // 데이터 길이가 총 26인데 이중 데이터가 25, 데이터 유형 1바이트
+  //strServiceData += (char)0xFF;   // 데이터 유형 0xFF  
+  //strServiceData += oBeacon.getData();
 
   lastSignalTime = millis();  // 타이머 초기화
   

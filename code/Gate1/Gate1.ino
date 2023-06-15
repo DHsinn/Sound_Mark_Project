@@ -147,9 +147,7 @@ class MyAdvertisedDeviceCallbacks: public BLEAdvertisedDeviceCallbacks {
         pAdvertising->setScanResponseData(oAdvertisementData);
         pAdvertising->start();
 
-        SpecifyMusicPlay(1);
-        //tone(speakerpin, 1000,500);
-        //noTone(speakerpin); // 사운드 출력 중지
+        SpecifyMusicPlay(2);
         }
         /*
         else{

@@ -19,11 +19,6 @@
 int previousMajor = 40; // 이전에 체크한 비콘의 Major 값
 int previousMinor = 15; // 이전에 체크한 비콘의 Minor 값
 const int SCAN_PERIOD = 10000; // 스캔 주기 (ms, 10초)
-int count = 0;  //loop 횟수
-
-
-//스피커 연결 핀번호 (GIOP 번호)
-#define speakerpin 23
 
 //오디오
 #include <SoftwareSerial.h>
@@ -31,29 +26,12 @@ int count = 0;  //loop 횟수
 SoftwareSerial mp3(17, 16); //TX, RX  (GIOP 번호)
 
 //절전모드
-#define SLEEP_DURATION 5 // 절전 모드 시간 (초)
 unsigned long lastSignalTime = 0;     //마지막으로 신호가 들어온 거 체크
 const int NO_SIGNAL_DURATION = 60 * 1000; // 60초
 
-unsigned long previousTime = 0;
-unsigned long interval = 5000;  // 몇초 후 비콘 송출 중지 (5초)
-
 BLEAdvertising *pAdvertising;   //송출 포인터설정
 BLEScan* pBLEScan;   //스캔포인터설정
-bool isBeaconDetected = false;   //아이비콘을 찾았다면 true 값으로 변경
-bool Scan = false;
-bool Playsong = false;
 
-/*
-void sleepMode() {
-    //Serial.println("절전 모드로 진입합니다..");
-    //PlayPause();
-    pBLEScan->clearResults();
-    setup();
-    loop();
-    //BLEDevice::deinit();
-    //esp_deep_sleep(SLEEP_DURATION * 1000000);
-}*/
 
 //비콘 manufacturerdata 로 감지하는 클래스
 class MyAdvertisedDeviceCallbacks: public BLEAdvertisedDeviceCallbacks {
@@ -105,8 +83,6 @@ class MyAdvertisedDeviceCallbacks: public BLEAdvertisedDeviceCallbacks {
       pAdvertising->setAdvertisementData(oAdvertisementData);
       pAdvertising->setScanResponseData(oAdvertisementData);
       pAdvertising->start();
-      
-      isBeaconDetected = true;   //비콘 찾았기 때문에 true로 변경
 
       // major, minor 값 뽑아오기
       std::string payload = advertisedDevice.getManufacturerData();
@@ -126,7 +102,6 @@ class MyAdvertisedDeviceCallbacks: public BLEAdvertisedDeviceCallbacks {
         //Serial.println("주변 스캔신호~!!");
         //Serial.println("주변을 스캔합니다.");
         pBLEScan->start(SCAN_PERIOD, true);
-        Scan = false;
       }
 
       else if(currentMajor == (3<<8) && currentMinor == 3){ //&& millis() - lastSongPlayTime >= SONG_IGNORE_DURATION
@@ -178,7 +153,7 @@ void setup() {
     mp3.begin(9600);
     //delay(100);
     
-    SelectPlayerDevice(0x02);       // Select SD card as the player device. 내 디바이스에 있는 SD카드에서 파일 가져오기
+    SelectPlayerDevice(0x02);       // Select SD card as the player device. 내 디바이스에 있는 SD카드에서 파일 가져오기 
     SetVolume(0x1E);        //볼륨설정하기 최대 0x1E
   //------------------------------------------------
 
@@ -195,8 +170,4 @@ void setup() {
 void loop() {
   BLEScanResults foundDevices = pBLEScan->start(SCAN_PERIOD, false);
   //lastSignalTime = millis();  // 타이머 초기화
-  // 찾은 기기 major, minor 값 변하는지 지켜보기
-
-  //실행 카운트
-  //count+=1;
 }

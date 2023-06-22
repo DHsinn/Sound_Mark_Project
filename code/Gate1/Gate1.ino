@@ -32,13 +32,8 @@ const int NO_SIGNAL_DURATION = 60 * 1000; // 60초
 BLEAdvertising *pAdvertising;   //송출 포인터설정
 BLEScan* pBLEScan;   //스캔포인터설정
 
-
 //비콘 manufacturerdata 로 감지하는 클래스
 class MyAdvertisedDeviceCallbacks: public BLEAdvertisedDeviceCallbacks {
-
-  unsigned long lastSongPlayTime = 0;        //마지막으로 플레이한 시간
-  const unsigned long SONG_IGNORE_DURATION = 50; // 노래 재생 신호를 무시할 시간(밀리초)
-
   private:
     BLEBeacon oBeacon;
     BLEAdvertisementData oAdvertisementData;
@@ -53,6 +48,7 @@ class MyAdvertisedDeviceCallbacks: public BLEAdvertisedDeviceCallbacks {
 
   void onResult(BLEAdvertisedDevice advertisedDevice) {
     //Serial.printf("Advertised Device: %s \n", advertisedDevice.toString().c_str());
+    Serial.println("드렁왔고");
 
     // iBeacon 감지 (manufacturerdata가 있는지 확인하고 iBeacon 패킷 구성에 맞는 manufacturerData인지 확인하기)
     if (advertisedDevice.haveManufacturerData() && advertisedDevice.getManufacturerData().length() == 25 &&
@@ -70,6 +66,7 @@ class MyAdvertisedDeviceCallbacks: public BLEAdvertisedDeviceCallbacks {
         */
 
       //Serial.println("지정된 iBeacon 탐색됨.");
+      Serial.println("기기도 찾았고");
 
       //비콘 찾은 후 신호 방출
       oBeacon.setManufacturerId(0x4c00);   //company ID
@@ -124,18 +121,6 @@ class MyAdvertisedDeviceCallbacks: public BLEAdvertisedDeviceCallbacks {
 
         SpecifyMusicPlay(2);
         }
-        /*
-        else{
-          unsigned long currentMillis = millis();
-          // 1분 이상 경과한 경우
-          if (currentMillis - lastSignalTime >= NO_SIGNAL_DURATION) {
-            // 절전 모드로 진입
-            sleepMode();
-          }
-        }*/
-      }
-      else{
-        pAdvertising->stop();
       }
     }
   };
@@ -144,11 +129,13 @@ void setup() {
   //Serial.begin(115200);
 
   //--------------------비콘구성---------------------
-  BLEDevice::init("RIVO_iBeacon");
+  BLEDevice::init("RIVO_Beacon");
   BLEDevice::startAdvertising();
 
   //lastSignalTime = millis();  // 타이머 초기화
   
+  Serial.begin(115200);
+  Serial.println("시작했고");
   //---------------------mp3 구성-------------------
     mp3.begin(9600);
     //delay(100);
@@ -168,6 +155,8 @@ void setup() {
 
 
 void loop() {
+  Serial.println("다시loop");
   BLEScanResults foundDevices = pBLEScan->start(SCAN_PERIOD, false);
   //lastSignalTime = millis();  // 타이머 초기화
 }
+

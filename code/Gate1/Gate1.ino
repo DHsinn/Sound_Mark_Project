@@ -48,7 +48,6 @@ class MyAdvertisedDeviceCallbacks: public BLEAdvertisedDeviceCallbacks {
 
   void onResult(BLEAdvertisedDevice advertisedDevice) {
     //Serial.printf("Advertised Device: %s \n", advertisedDevice.toString().c_str());
-    Serial.println("드렁왔고");
 
     // iBeacon 감지 (manufacturerdata가 있는지 확인하고 iBeacon 패킷 구성에 맞는 manufacturerData인지 확인하기)
     if (advertisedDevice.haveManufacturerData() && advertisedDevice.getManufacturerData().length() == 25 &&
@@ -66,7 +65,6 @@ class MyAdvertisedDeviceCallbacks: public BLEAdvertisedDeviceCallbacks {
         */
 
       //Serial.println("지정된 iBeacon 탐색됨.");
-      Serial.println("기기도 찾았고");
 
       //비콘 찾은 후 신호 방출
       oBeacon.setManufacturerId(0x4c00);   //company ID
@@ -133,9 +131,6 @@ void setup() {
   BLEDevice::startAdvertising();
 
   //lastSignalTime = millis();  // 타이머 초기화
-  
-  Serial.begin(115200);
-  Serial.println("시작했고");
   //---------------------mp3 구성-------------------
     mp3.begin(9600);
     //delay(100);
@@ -155,7 +150,6 @@ void setup() {
 
 
 void loop() {
-  Serial.println("다시loop");
   BLEScanResults foundDevices = pBLEScan->start(SCAN_PERIOD, false);
   //lastSignalTime = millis();  // 타이머 초기화
 }

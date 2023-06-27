@@ -16,8 +16,8 @@
 //#define SCAN_PERIOD 10  //스캔주기 초
 #define SCAN_INTERVAL 100
 
-int previousMajor = 40; // 이전에 체크한 비콘의 Major 값
-int previousMinor = 15; // 이전에 체크한 비콘의 Minor 값
+//int previousMajor = 40; // 이전에 체크한 비콘의 Major 값
+//int previousMinor = 15; // 이전에 체크한 비콘의 Minor 값
 const int SCAN_PERIOD = 10000; // 스캔 주기 (ms, 10초)
 
 //오디오
@@ -26,8 +26,8 @@ const int SCAN_PERIOD = 10000; // 스캔 주기 (ms, 10초)
 SoftwareSerial mp3(17, 16); //TX, RX  (GIOP 번호)
 
 //절전모드
-unsigned long lastSignalTime = 0;     //마지막으로 신호가 들어온 거 체크
-const int NO_SIGNAL_DURATION = 60 * 1000; // 60초
+//unsigned long lastSignalTime = 0;     //마지막으로 신호가 들어온 거 체크
+//const int NO_SIGNAL_DURATION = 60 * 1000; // 60초
 
 BLEAdvertising *pAdvertising;   //송출 포인터설정
 BLEScan* pBLEScan;   //스캔포인터설정
@@ -69,7 +69,7 @@ class MyAdvertisedDeviceCallbacks: public BLEAdvertisedDeviceCallbacks {
       //비콘 찾은 후 신호 방출
       oBeacon.setManufacturerId(0x4c00);   //company ID
       oBeacon.setProximityUUID(BLEUUID(BEACON_UUID));    //UUID
-      oBeacon.setMajor((2<<8)+3);  // 0000 0001 0000 0003
+      oBeacon.setMajor((2<<8)+3);  // 0000 0002 0000 0003
       oBeacon.setMinor(3);
 
       oAdvertisementData.setFlags(0x04);
@@ -93,31 +93,31 @@ class MyAdvertisedDeviceCallbacks: public BLEAdvertisedDeviceCallbacks {
 
           //Serial.println("비콘의 Major 또는 Minor 값이 변경되었습니다.");
 
-      if (currentMajor == (1<<8) && currentMinor == 3) {
-        //Serial.println("주변 스캔신호~!!");
-        //Serial.println("주변을 스캔합니다.");
-        pBLEScan->start(SCAN_PERIOD, true);
-      }
+        if (currentMajor == (1<<8) && currentMinor == 3) {
+          //Serial.println("주변 스캔신호~!!");
+          //Serial.println("주변을 스캔합니다.");
+          pBLEScan->start(SCAN_PERIOD, true);
+        }
 
-      else if(currentMajor == (3<<8) && currentMinor == 3){ //&& millis() - lastSongPlayTime >= SONG_IGNORE_DURATION
+        else if(currentMajor == (3<<8) && currentMinor == 3){ //&& millis() - lastSongPlayTime >= SONG_IGNORE_DURATION
 
-        //Serial.println("노래 재생신호~!!");
-        //Serial.println("노래를 재생합니다.");
-        //비콘 찾아서 신호 보내주려고 major, minor 값 바꿔서 전송
+          //Serial.println("노래 재생신호~!!");
+          //Serial.println("노래를 재생합니다.");
+          //비콘 찾아서 신호 보내주려고 major, minor 값 바꿔서 전송
 
-        oBeacon.setManufacturerId(0x4c00);   //company ID
-        oBeacon.setProximityUUID(BLEUUID(BEACON_UUID));    //UUID
-        oBeacon.setMajor((4<<8)+3);
-        oBeacon.setMinor(3);
+          oBeacon.setManufacturerId(0x4c00);   //company ID
+          oBeacon.setProximityUUID(BLEUUID(BEACON_UUID));    //UUID
+          oBeacon.setMajor((4<<8)+3);
+          oBeacon.setMinor(3);
 
-        oAdvertisementData.setFlags(0x04);
-        oAdvertisementData.setManufacturerData(oBeacon.getData());
+          oAdvertisementData.setFlags(0x04);
+          oAdvertisementData.setManufacturerData(oBeacon.getData());
 
-        pAdvertising->setAdvertisementData(oAdvertisementData);
-        pAdvertising->setScanResponseData(oAdvertisementData);
-        pAdvertising->start();
+          pAdvertising->setAdvertisementData(oAdvertisementData);
+          pAdvertising->setScanResponseData(oAdvertisementData);
+          pAdvertising->start();
 
-        SpecifyMusicPlay(2);
+          SpecifyMusicPlay(4);
         }
       }
     }

@@ -8,7 +8,7 @@
 #include "freertos/task.h"
 
 
-//------------------------------------------------------------------------엘리베이터--------------------------------------------------------------------
+//-------------------------------------------------------------------------------남자 화장실-----------------------------------------------------------------------------
 
 // UUID
 #define BEACON_UUID "8ec76ea3-6668-48da-9866-75be8bc86f4d"
@@ -18,7 +18,7 @@
 #define SCAN_INTERVAL 100
 #define SCAN_PERIOD 10000
 
-// Command
+// command
 #define SCAN 1<<8
 #define INFO 2<<8
 #define LOCATE 3<<8
@@ -41,14 +41,13 @@ class MyAdvertisedDeviceCallbacks : public BLEAdvertisedDeviceCallbacks {
   public:
   void onResult(BLEAdvertisedDevice advertisedDevice) {
     std::string manufacturerData = advertisedDevice.getManufacturerData();
-
     if (advertisedDevice.haveManufacturerData() && manufacturerData.length() == 25 &&
         manufacturerData[0] == 0x4c && manufacturerData[1] == 0x00 &&
         manufacturerData[2] == 0x02 && manufacturerData[3] == 0x15 &&
         manufacturerData[4] == 0x39 && manufacturerData[5] == 0xed &&
         manufacturerData[6] == 0x98 && manufacturerData[7] == 0xff &&
         manufacturerData[8] == 0x29 && manufacturerData[9] == 0x00) {
-
+        
     }
   }
 };
@@ -72,20 +71,20 @@ void scanTask(void* pvParameters){
           uint16_t major = manufacturerData[20] << 8 | manufacturerData[21];
           uint16_t minor = manufacturerData[22] << 8 | manufacturerData[23];
           
-          if (major == SCAN && minor == (3<<8)+1) {
+          if (major == SCAN && minor == (2<<8)+2) {
             pBLEScan->start(SCAN_PERIOD, true);
           }
-          else if(major == (LOCATE)+1 && (minor == (3<<8)+1 || minor == (3<<8) || minor == 0) && !isPlaying){
+          else if(major == (LOCATE)+1 && (minor == (2<<8)+2 || minor == (2<<8) || minor == 0) && !isPlaying){
             SpecifyMusicPlay(1);
             isPlaying = true;
             startTime = millis();
           }
-          else if(major == (LOCATE)+2 && (minor == (3<<8)+1 || minor == (3<<8) || minor == 0) && !isPlaying){
+          else if(major == (LOCATE)+2 && (minor == (2<<8)+2 || minor == (2<<8) || minor == 0) && !isPlaying){
             SpecifyMusicPlay(2);
             isPlaying = true;
             startTime = millis();
           }
-          else if(major == (LOCATE)+3 && (minor == (3<<8)+1 || minor == (3<<8) || minor == 0) && !isPlaying){
+          else if(major == (LOCATE)+3 && (minor == (2<<8)+2 || minor == (2<<8) || minor == 0) && !isPlaying){
             SpecifyMusicPlay(3);
             isPlaying = true;
             startTime = millis();
@@ -95,23 +94,22 @@ void scanTask(void* pvParameters){
       xSemaphoreGive(semaphore);
     }
 
-    // 3초동안 노래재생 못하게 하기
-    if (isPlaying && (millis() - startTime >= 3000)) {
+    // 3.5초동안 노래재생 못하게 하기
+    if (isPlaying && (millis() - startTime >= 3500)) {
       isPlaying = false;
     }
 
-    vTaskDelay(10 / portTICK_PERIOD_MS);  // 0.01초 대기
+    vTaskDelay(10 / portTICK_PERIOD_MS);  // Delay for 0.1 second
   }
 }
 
 void beaconTask(void* pvParameters){
   for (;;) {
     if (xSemaphoreTake(semaphore, portMAX_DELAY) == pdTRUE){
-      //Serial.println("왜 안들어옴?");
       oBeacon.setManufacturerId(0x4c00);
       oBeacon.setProximityUUID(BLEUUID(BEACON_UUID));
       oBeacon.setMajor(INFO);  //0000 0001 0000 0000
-      oBeacon.setMinor((3<<8)+1); //0000 0003 0000 0001
+      oBeacon.setMinor((2<<8)+2); //0000 0004 0000 0001
 
       oAdvertisementData.setFlags(0x04);
       oAdvertisementData.setManufacturerData(oBeacon.getData());
@@ -122,7 +120,7 @@ void beaconTask(void* pvParameters){
 
       xSemaphoreGive(semaphore);
     }
-    vTaskDelay(10 / portTICK_PERIOD_MS);  // Delay for 0.01 second
+    vTaskDelay(10 / portTICK_PERIOD_MS);  // Delay for 0.1 second
     vTaskDelete(NULL);
   }
 }
@@ -145,10 +143,11 @@ void setup() {
   pBLEScan->setInterval(100);
   pBLEScan->setWindow(99);
 
-  xTaskCreatePinnedToCore(scanTask, "Scan Task", 2048, NULL, 1, &scanTaskHandle, 0); // Scan Task 생성
-  xTaskCreatePinnedToCore(beaconTask, "Beacon Task", 2048, NULL, 2, &beaconTaskHandle, 1); // Beacon Task 생성
+  // Create a task for scanning
+  xTaskCreatePinnedToCore(scanTask, "Scan Task", 10000, NULL, 1, &scanTaskHandle, 0); // Scan Task 생성
+  xTaskCreatePinnedToCore(beaconTask, "Beacon Task", 10000, NULL, 2, &beaconTaskHandle, 1); // Beacon Task 생성
 }
 
 void loop() {
-  //vTaskDelay(100 / portTICK_PERIOD_MS); // 0.1초 대기
+  vTaskDelay(100 / portTICK_PERIOD_MS); // 0.1초 대기
 }

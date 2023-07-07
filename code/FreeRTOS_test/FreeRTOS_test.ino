@@ -80,8 +80,8 @@ void scanTask(void* pvParameters){
       xSemaphoreGive(semaphore);
     }
 
-    // 3초동안 노래재생 못하게 하기
-    if (isPlaying && (millis() - startTime >= 3000)) {
+    // 3.5초동안 노래재생 못하게 하기
+    if (isPlaying && (millis() - startTime >= 3500)) {
       isPlaying = false;
     }
 

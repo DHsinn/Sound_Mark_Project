@@ -8,15 +8,15 @@
 #include "freertos/task.h"
 
 
-//-------------------------------------------------------------------------------남자 화장실-----------------------------------------------------------------------------
+//-------------------------------------------------------------------------------게이트1------------------------------------------------------------------
 
 // UUID
 #define BEACON_UUID "8ec76ea3-6668-48da-9866-75be8bc86f4d"
 #define TEST_BEACON_UUID "39ED98FF-2900-441A-802F-9C398FC199D2"
 
 // 스캔 주기 및 스캔 시간
-#define SCAN_INTERVAL 100
-#define SCAN_PERIOD 10000
+#define SCAN_WINDOW 599   //스캔 창크기
+#define SCAN_INTERVAL 600   //리턴 주기
 
 // command
 #define SCAN 1<<8
@@ -33,14 +33,23 @@ BLEAdvertising *pAdvertising = BLEDevice::getAdvertising();
 BLEBeacon oBeacon = BLEBeacon();
 BLEAdvertisementData oAdvertisementData = BLEAdvertisementData();
 
+bool beacon_detected = false;
+
 SemaphoreHandle_t semaphore;
 TaskHandle_t scanTaskHandle;
 TaskHandle_t beaconTaskHandle;
 
+
 class MyAdvertisedDeviceCallbacks : public BLEAdvertisedDeviceCallbacks {
   public:
+  bool isPlaying = false;
+  unsigned long startTime = 0;
+  
   void onResult(BLEAdvertisedDevice advertisedDevice) {
     std::string manufacturerData = advertisedDevice.getManufacturerData();
+    //Serial.printf("Advertised Device: %s \n", advertisedDevice.toString().c_str());
+
+    //Serial.printf("%d\n", advertisedDevice.getcount());
     if (advertisedDevice.haveManufacturerData() && manufacturerData.length() == 25 &&
         manufacturerData[0] == 0x4c && manufacturerData[1] == 0x00 &&
         manufacturerData[2] == 0x02 && manufacturerData[3] == 0x15 &&
@@ -48,68 +57,63 @@ class MyAdvertisedDeviceCallbacks : public BLEAdvertisedDeviceCallbacks {
         manufacturerData[6] == 0x98 && manufacturerData[7] == 0xff &&
         manufacturerData[8] == 0x29 && manufacturerData[9] == 0x00) {
         
+        //Serial.println("신호받음");
+        beacon_detected = true;
+
+      //신호값 받기
+        uint16_t major = manufacturerData[20] << 8 | manufacturerData[21];
+        uint16_t minor = manufacturerData[22] << 8 | manufacturerData[23];
+
+        Serial.printf("메이저 : %d\n", major);
+        //Serial.printf("마이너 : %d\n", minor);
+        
+        if(major == (LOCATE)+1 && (minor == (2<<8)+1 || minor == (2<<8) || minor == 0) && !isPlaying){
+          Serial.println("들어오지않음?");
+          SpecifyMusicPlay(1);
+          isPlaying = true;
+          startTime = millis();
+        }
+        else if(major == (LOCATE)+2 && (minor == (2<<8)+1 || minor == (2<<8) || minor == 0) && !isPlaying){
+          SpecifyMusicPlay(2);
+          isPlaying = true;
+          startTime = millis();
+        }
+        else if(major == (LOCATE)+3 && (minor == (2<<8)+1 || minor == (2<<8) || minor == 0) && !isPlaying){
+          SpecifyMusicPlay(3);
+          isPlaying = true;
+          startTime = millis();
+        }
+      }
+      else{
+        beacon_detected = false;
+      }
+      
+    // SCAN_INTERVAL동안 노래재생 못하게 하기
+    if (isPlaying && (millis() - startTime >= SCAN_INTERVAL)) {
+      isPlaying = false;
     }
   }
 };
 
-MyAdvertisedDeviceCallbacks callbacks;
+//MyAdvertisedDeviceCallbacks callbacks;
 
 void scanTask(void* pvParameters){
-  bool isPlaying = false;
-  unsigned long startTime = 0;
-
   for (;;) {
-    if (xSemaphoreTake(semaphore, portMAX_DELAY) == pdTRUE) {
-      BLEScanResults foundDevices = pBLEScan->start(1, false);
-      for (int i = 0; i < foundDevices.getCount(); i++) {
-        BLEAdvertisedDevice advertisedDevice = foundDevices.getDevice(i);
-        callbacks.onResult(advertisedDevice);
-
-        std::string manufacturerData = advertisedDevice.getManufacturerData();
-        if (manufacturerData.length() >= 24) {
-          //신호값 받기
-          uint16_t major = manufacturerData[20] << 8 | manufacturerData[21];
-          uint16_t minor = manufacturerData[22] << 8 | manufacturerData[23];
-          
-          if (major == SCAN && minor == (2<<8)+2) {
-            pBLEScan->start(SCAN_PERIOD, true);
-          }
-          else if(major == (LOCATE)+1 && (minor == (2<<8)+2 || minor == (2<<8) || minor == 0) && !isPlaying){
-            SpecifyMusicPlay(1);
-            isPlaying = true;
-            startTime = millis();
-          }
-          else if(major == (LOCATE)+2 && (minor == (2<<8)+2 || minor == (2<<8) || minor == 0) && !isPlaying){
-            SpecifyMusicPlay(2);
-            isPlaying = true;
-            startTime = millis();
-          }
-          else if(major == (LOCATE)+3 && (minor == (2<<8)+2 || minor == (2<<8) || minor == 0) && !isPlaying){
-            SpecifyMusicPlay(3);
-            isPlaying = true;
-            startTime = millis();
-          }
-        }
-      }
-      xSemaphoreGive(semaphore);
+      //if (xSemaphoreTake(semaphore, portMAX_DELAY) == pdTRUE) {
+        pBLEScan->start(true);
+      //xSemaphoreGive(semaphore);
     }
-
-    // 3.5초동안 노래재생 못하게 하기
-    if (isPlaying && (millis() - startTime >= 3500)) {
-      isPlaying = false;
-    }
-
-    vTaskDelay(10 / portTICK_PERIOD_MS);  // Delay for 0.1 second
+    vTaskDelay(10 / portTICK_PERIOD_MS);  // Delay for 0.01 second
   }
-}
 
 void beaconTask(void* pvParameters){
   for (;;) {
-    if (xSemaphoreTake(semaphore, portMAX_DELAY) == pdTRUE){
+    //if (xSemaphoreTake(semaphore, portMAX_DELAY) == pdTRUE){
+      if(beacon_detected){
       oBeacon.setManufacturerId(0x4c00);
       oBeacon.setProximityUUID(BLEUUID(BEACON_UUID));
       oBeacon.setMajor(INFO);  //0000 0001 0000 0000
-      oBeacon.setMinor((2<<8)+2); //0000 0004 0000 0001
+      oBeacon.setMinor((2<<8)+1); //0000 0004 0000 0001 0x0401
 
       oAdvertisementData.setFlags(0x04);
       oAdvertisementData.setManufacturerData(oBeacon.getData());
@@ -118,16 +122,19 @@ void beaconTask(void* pvParameters){
       pAdvertising->setScanResponseData(oAdvertisementData);
       pAdvertising->start();
 
-      xSemaphoreGive(semaphore);
+     // xSemaphoreGive(semaphore);
     }
-    vTaskDelay(10 / portTICK_PERIOD_MS);  // Delay for 0.1 second
-    vTaskDelete(NULL);
+    //else{
+    //  pAdvertising->stop();
+    //}
+    vTaskDelay(10 / portTICK_PERIOD_MS);  // Delay for 0.01 second
+    //vTaskDelete(NULL);
   }
 }
 
 void setup() {
   BLEDevice::init("RIVO_iBeacon");
-  //Serial.begin(115200);
+  Serial.begin(115200);
 
   semaphore = xSemaphoreCreateMutex();
 
@@ -140,14 +147,18 @@ void setup() {
   //-------------------------------------------------
 
   pBLEScan = BLEDevice::getScan();
-  pBLEScan->setInterval(100);
-  pBLEScan->setWindow(99);
+  pBLEScan->setAdvertisedDeviceCallbacks(new MyAdvertisedDeviceCallbacks());
+  pBLEScan->setInterval(SCAN_INTERVAL);
+  pBLEScan->setWindow(SCAN_WINDOW);
+  pBLEScan->setActiveScan(true);
 
   // Create a task for scanning
-  xTaskCreatePinnedToCore(scanTask, "Scan Task", 10000, NULL, 1, &scanTaskHandle, 0); // Scan Task 생성
-  xTaskCreatePinnedToCore(beaconTask, "Beacon Task", 10000, NULL, 2, &beaconTaskHandle, 1); // Beacon Task 생성
+  xTaskCreatePinnedToCore(scanTask, "Scan Task", 2048, NULL, 1, &scanTaskHandle, 0); // Scan Task 생성
+  xTaskCreatePinnedToCore(beaconTask, "Beacon Task", 2048, NULL, 1, &beaconTaskHandle, 1); // Beacon Task 생성
+
+  //vTaskStartScheduler();
 }
 
 void loop() {
-  vTaskDelay(100 / portTICK_PERIOD_MS); // 0.1초 대기
+  //vTaskDelay(100 / portTICK_PERIOD_MS); // 0.1초 대기
 }
